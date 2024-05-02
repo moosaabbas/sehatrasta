@@ -31,7 +31,7 @@ const LoginScreen = () => {
       .then(async (userCredential) => {
         // Signed in
         const user = userCredential.user;
-        dispatch({ type: "setUser", payload: user });const dispatch = useDispatch();
+        dispatch({ type: "setUser", payload: user })
         console.log(userCredential);
       })
       .catch((error) => {
