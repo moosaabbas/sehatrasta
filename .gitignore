@@ -53,3 +53,5 @@ metro-cache/
 # Project's temp files
 tmp/
 temp/
+
+node_modules/
