@@ -15,12 +15,13 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from "firebase/auth";
+import { useDispatch } from "react-redux";
 
 const LoginScreen = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const dispatch = useDispatch();
   StatusBar.setBarStyle("dark-content");
 
   const auth = getAuth();
@@ -30,6 +31,7 @@ const LoginScreen = () => {
       .then(async (userCredential) => {
         // Signed in
         const user = userCredential.user;
+        dispatch({ type: "setUser", payload: user });const dispatch = useDispatch();
         console.log(userCredential);
       })
       .catch((error) => {

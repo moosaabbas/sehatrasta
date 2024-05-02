@@ -11,11 +11,13 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { useDispatch } from "react-redux";
 
 const SignupScreen = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const dispatch = useDispatch();
 
   StatusBar.setBarStyle("dark-content");
 
@@ -29,7 +31,8 @@ const SignupScreen = () => {
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         const user = userCredential.user;
-        console.log("account created", user);
+        // console.log("account created", user);
+        dispatch({ type: "setUser", payload: user });
       })
       .catch((error) => {
         const errorCode = error.code;
