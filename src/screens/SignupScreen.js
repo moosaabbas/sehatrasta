@@ -7,53 +7,64 @@ import {
   TextInput,
   View,
   StatusBar,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import { useDispatch } from "react-redux";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
+
+// Helper function to validate email and password
+const validate = (email, password) => {
+  // Basic validation for email and password
+  return email.length > 0 && password.length > 6;
+};
+
+// Helper function to create initial user record
+const createInitialUserRecordThroughEmail = async (user, fullName) => {
+  const firestore = getFirestore();
+  const userDocRef = doc(firestore, 'users', user.uid);
+  await setDoc(userDocRef, {
+    fullName: fullName,
+    email: user.email,
+    createdAt: new Date(),
+    currentWeight: 0,  // Initialize with default value
+    height: 0,         // Initialize with default value
+    age: 0,            // Initialize with default value
+    gender: "",        // Initialize with default value
+    targetWeight: 0,   // Initialize with default value
+    dailyCalorieGoal: 0, // Initialize with default value
+    caloriesBurnedAtRest: 0 // Initialize with default value
+  });
+};
 
 const SignupScreen = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
 
-  StatusBar.setBarStyle("dark-content");
-
-  // const handleLogin = async () => {
-  //   console.log("Login attempt with:", mobileNumber);
-  //   // Placeholder for login logic
-  //   navigation.navigate("HomeScreen"); // Assuming 'HomeScreen' is a valid route
-  // };
   const auth = getAuth();
-  const onSignUp = () => {
-    createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        const user = userCredential.user;
-        // console.log("account created", user);
-        dispatch({ type: "setUser", payload: user });
-      })
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        console.log(errorMessage);
-      });
-  };
+  const firestore = getFirestore();
 
-  // const auth = getAuth();
-  // createUserWithEmailAndPassword(auth, email, password)
-  //   .then((userCredential) => {
-  //     console.log('user created', userCredential);
-  //     // Signed up
-  //     // const user = userCredential.user;
-  //     // ...
-  //   })
-  //   .catch((error) => {
-  //     const errorCode = error.code;
-  //     const errorMessage = error.message;
-  //     // ..
-  //   });
+  const onSignUp = async () => {
+    if (validate(email, password)) {
+      setLoading(true);
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await createInitialUserRecordThroughEmail(userCredential.user, fullName); // Pass full name
+        dispatch({ type: "setUser", payload: userCredential.user });
+        setLoading(false);
+        navigation.navigate("GoalForm"); // Navigate to goals form after sign up
+      } catch (error) {
+        setLoading(false);
+        console.error("Signup error:", error.message);
+      }
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -78,11 +89,18 @@ const SignupScreen = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.headingConctainer}>
+        <View style={styles.headingContainer}>
           <Text style={styles.headingText}>Sign up</Text>
         </View>
       </SafeAreaView>
       <View style={styles.contentContainer}>
+        <TextInput
+          autoCapitalize="words"
+          style={styles.input}
+          placeholder="Enter your full name"
+          onChangeText={setFullName}
+          keyboardType="default"
+        />
         <TextInput
           autoCapitalize="none"
           style={styles.input}
@@ -96,11 +114,15 @@ const SignupScreen = () => {
           style={styles.input}
           placeholder="Enter your password"
           onChangeText={setPassword}
-          keyboardType="password"
+          keyboardType="default"
         />
-        <TouchableOpacity style={styles.loginButton} onPress={onSignUp}>
-          <Text style={styles.loginButtonText}>Sign up</Text>
-        </TouchableOpacity>
+        {loading ? (
+          <ActivityIndicator size="large" color="#0000ff" />
+        ) : (
+          <TouchableOpacity style={styles.loginButton} onPress={onSignUp}>
+            <Text style={styles.loginButtonText}>Sign up</Text>
+          </TouchableOpacity>
+        )}
         <View style={styles.dividerContainer}>
           <View style={styles.divider} />
           <Text style={styles.dividerText}>Or login with</Text>
@@ -112,9 +134,9 @@ const SignupScreen = () => {
         <TouchableOpacity style={styles.socialButton}>
           <Text style={styles.socialButtonText}>Continue with Apple</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate("RegisterScreen")}>
+        <TouchableOpacity onPress={() => navigation.navigate("LoginScreen")}>
           <Text style={styles.registerText}>
-            Don't have an account?{" "}
+            Already have an account?{" "}
             <Text style={styles.registerLinkText}>Login</Text>
           </Text>
         </TouchableOpacity>
@@ -130,24 +152,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
-  safeArea: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 10,
-  },
   backButton: {
     margin: 10,
     padding: 8,
     borderRadius: 100,
     backgroundColor: "purple",
   },
-  backIcon: {
-    fontSize: 24,
-    color: "purple",
+  headingContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 0,
   },
   headingText: {
-    flex: 1,
-    textAlign: "center",
     fontSize: 22,
     color: "purple",
     fontWeight: "bold",
@@ -155,14 +171,6 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     padding: 20,
-  },
-  headingConctainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 0,
-  },
-  headingText: {
-    fontSize: 18,
   },
   input: {
     borderColor: "#ccc",
@@ -178,11 +186,6 @@ const styles = StyleSheet.create({
     padding: 15,
     alignItems: "center",
     marginBottom: 20,
-  },
-  loginButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
   },
   dividerContainer: {
     flexDirection: "row",
@@ -218,3 +221,6 @@ const styles = StyleSheet.create({
     color: "purple",
   },
 });
+
+
+
