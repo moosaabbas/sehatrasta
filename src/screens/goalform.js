@@ -3,8 +3,9 @@ import { View, TextInput, Button, Text, StyleSheet, ScrollView } from 'react-nat
 import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { Picker } from '@react-native-picker/picker';
+import DailyActivity from '../screens/dailyActivity';
 
-const GoalForm = () => {
+const GoalForm = ({ navigation }) => {
   const [currentWeight, setCurrentWeight] = useState('');
   const [targetWeight, setTargetWeight] = useState('');
   const [dailyCalorieGoal, setDailyCalorieGoal] = useState('');
@@ -14,6 +15,7 @@ const GoalForm = () => {
   const [activityLevel, setActivityLevel] = useState('sedentary');
   const [bmr, setBmr] = useState(0);
   const [deficitDays, setDeficitDays] = useState([]);
+
 
   const firestore = getFirestore();
   const auth = getAuth();
@@ -109,9 +111,11 @@ const GoalForm = () => {
         caloriesBurnedAtRest: bmr
       });
       alert('Goals updated successfully!');
+      navigation.navigate('DailyActivity');
     } catch (error) {
       console.error("Error updating goals: ", error);
     }
+    
   };
 
   return (
@@ -202,6 +206,7 @@ const styles = StyleSheet.create({
 });
 
 export default GoalForm;
+
 
 
 

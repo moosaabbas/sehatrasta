@@ -2,7 +2,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Dashboard from '../screens/Dashboard';
 import GoalForm from '../screens/goalform';
-
+import DailyActivity from '../screens/dailyActivity';
 const MainStack = () => {
   const Stack = createNativeStackNavigator();
 
@@ -19,6 +19,13 @@ const MainStack = () => {
         <Stack.Screen
           name="GoalForm"
           component={GoalForm}
+          options={{
+            headerShown: false,
+          }}
+        />
+         <Stack.Screen
+          name="DailyActivity"
+          component={DailyActivity}
           options={{
             headerShown: false,
           }}
