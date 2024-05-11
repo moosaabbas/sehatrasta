@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, StyleSheet, SafeAreaView, ActivityIndicator, Text } from 'react-native';
+import { View, Image, StyleSheet, SafeAreaView, ActivityIndicator, Text, ImageBackground } from 'react-native';
 import { firebase } from "../../firebaseConfig";
 
 const ImportedImage = ({ route }) => {
@@ -32,6 +32,7 @@ const ImportedImage = ({ route }) => {
   }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
+    <ImageBackground source={require('../assets/bg-med.jpg')} style={importedStyles.backgroundImage}>
     <SafeAreaView style={importedStyles.container}>
         <View style={importedStyles.headerContainer}>
         <Text style={importedStyles.headerText}>Records Repository</Text>
@@ -45,26 +46,32 @@ const ImportedImage = ({ route }) => {
         )}
       </View>
     </SafeAreaView>
+    </ImageBackground>
   );
 };
 
 const importedStyles = StyleSheet.create({
+    backgroundImage: {
+        flex: 1,
+        resizeMode: 'cover', // or 'contain' depending on your preference
+        justifyContent: 'center',
+    },
     headerContainer: {
         alignItems: 'center', 
-        marginBottom: 20,
+        marginBottom: 10,
     },
     headerText: {
-        fontSize: 24,
+        color: '#03161c',
+        fontSize: 28,
         fontWeight: 'bold',
-        color: 'white', // Adjust color as needed
+        marginTop: 20
     },
     subHeaderText: {
         fontSize: 16,
-        color: 'lightgray', // Adjust color as needed
+        color: '#03161c'
     },
     container: {
-        flex: 1,
-        backgroundColor: '#666566',
+        flex: 1
     },
     imageContainer: {
         flex: 1,
