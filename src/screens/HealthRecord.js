@@ -6,6 +6,7 @@ import { firebase } from "../../firebaseConfig";
 import 'firebase/compat/firestore'; 
 import 'firebase/compat/auth'; 
 import 'firebase/compat/storage'; // Include for Firebase Storage
+import { useNavigation } from '@react-navigation/native';
 
 const UploadMediaFile = () => {
     const [image, setImage] = useState(null);
@@ -23,6 +24,31 @@ const UploadMediaFile = () => {
             setImage(result.assets[0].uri);
         }
     };
+
+    const navigation = useNavigation();
+
+    const navigateToImportedImage = async () => {
+        if (image) { // If the user has selected an image, navigate immediately
+            navigation.navigate('ImportedImage', { imageUri: image });
+            return; // Exit the function early
+        }
+
+        try {
+            const user = firebase.auth().currentUser;
+            if (user) {
+                const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
+                if (userDoc.exists && userDoc.data().image) { 
+                    navigation.navigate('ImportedImage', { imageUri: userDoc.data().image });
+                } else {
+                    Alert.alert('No Image Found', 'You have not uploaded any images yet.');
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching image:', error);
+            Alert.alert('Error', 'An error occurred while fetching your image.');
+        }
+    };
+
 
     const uploadMedia = async () => {
         setUploading(true);
@@ -86,7 +112,10 @@ const UploadMediaFile = () => {
             <TouchableOpacity style={styles.uploadButton} onPress={uploadMedia}>
                 <Text style={styles.buttonText}>Upload Image</Text>
             </TouchableOpacity>
- 
+
+            <TouchableOpacity style={styles.importButton} onPress={navigateToImportedImage}>
+                <Text style={styles.buttonText}>Import</Text>
+            </TouchableOpacity>
  
             </View>
         </SafeAreaView>
@@ -156,11 +185,23 @@ const UploadMediaFile = () => {
         marginTop: 30,
         marginBottom: 50,
         alignItems: 'center'
+    },
+    importButton: {
+        borderRadius: 10,
+        width: 200,
+        height: 50,
+        backgroundColor: '#4CAF50', // Green color for the import button
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
     }
- 
- 
+
  });
  
  export default UploadMediaFile;
  
-
