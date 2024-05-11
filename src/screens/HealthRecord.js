@@ -13,37 +13,42 @@ const UploadMediaFile = () => {
     const navigation = useNavigation();
 
     const pickImageAndUpload = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
+        let results = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [4, 3],
             quality: 1,
+            multiple: true, // Allow multiple image selection
         });
 
-        if (!result.cancelled) {
+        if (!results.cancelled) {
             setUploading(true); // Start the loading indicator
 
             try {
-                const { uri } = await FileSystem.getInfoAsync(result.assets[0].uri);
-                const blob = await new Promise((resolve, reject) => {
-                    const xhr = new XMLHttpRequest();
-                    xhr.onload = async () => { resolve(xhr.response); };
-                    xhr.onerror = (e) => { reject(new TypeError('Network request failed')); };
-                    xhr.responseType = 'blob';
-                    xhr.open('GET', uri, true);
-                    xhr.send(null);
+                const uploadTasks = results.assets.map(async (asset) => {
+                    const { uri } = await FileSystem.getInfoAsync(asset.uri);
+                    const blob = await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.onload = async () => { resolve(xhr.response); };
+                        xhr.onerror = (e) => { reject(new TypeError('Network request failed')); };
+                        xhr.responseType = 'blob';
+                        xhr.open('GET', uri, true);
+                        xhr.send(null);
+                    });
+
+                    const filename = asset.uri.substring(asset.uri.lastIndexOf('/') + 1);
+                    const storageRef = firebase.storage().ref().child(filename);
+                    const snapshot = await storageRef.put(blob);
+                    return await snapshot.ref.getDownloadURL();
                 });
 
-                const filename = result.assets[0].uri.substring(result.assets[0].uri.lastIndexOf('/') + 1);
-                const storageRef = firebase.storage().ref().child(filename);
-                const snapshot = await storageRef.put(blob);
-                const downloadURL = await snapshot.ref.getDownloadURL();
+                const downloadURLs = await Promise.all(uploadTasks);
 
                 const user = firebase.auth().currentUser;
                 if (user) {
                     const userDocRef = firebase.firestore().collection('users').doc(user.uid);
-                    await userDocRef.update({ image: downloadURL });
-                    Alert.alert('Photo Uploaded!');
+                    await userDocRef.update({ images: firebase.firestore.FieldValue.arrayUnion(...downloadURLs) });
+                    Alert.alert('Photos Uploaded!');
                 } else {
                     console.error('No user is logged in.');
                 }
@@ -61,8 +66,8 @@ const UploadMediaFile = () => {
             const user = firebase.auth().currentUser;
             if (user) {
                 const userDoc = await firebase.firestore().collection('users').doc(user.uid).get();
-                if (userDoc.exists && userDoc.data().image) {
-                    navigation.navigate('ImportedImage', { imageUri: userDoc.data().image });
+                if (userDoc.exists && userDoc.data().images) {
+                    navigation.navigate('ImportedImage', { imageUri: userDoc.data().images });
                 } else {
                     Alert.alert('No Image Found', 'You have not uploaded any images yet.');
                 }
@@ -77,7 +82,7 @@ const UploadMediaFile = () => {
         <ImageBackground source={require('../assets/bg-med.jpg')} style={styles.backgroundImage}>
             <SafeAreaView style={styles.container}>
                 <View style={styles.headerContainer}>
-                    <Text style={styles.headerText}>Upload Medical Record</Text>
+                    <Text style={styles.headerText}>Upload Medical Records</Text>
                     <Text style={styles.subHeaderText}>Choose an image to upload</Text>
                     <Image
                         source={require('../assets/upload-icon2.png')}
@@ -93,7 +98,7 @@ const UploadMediaFile = () => {
                 {uploading && <ActivityIndicator size="large" color="#0000ff" style={styles.loadingIndicator} />}
 
                 <TouchableOpacity style={styles.importButton} onPress={navigateToImportedImage}>
-                    <Text style={styles.buttonText}>View File</Text>
+                    <Text style={styles.buttonText}>View Files</Text>
                 </TouchableOpacity>
             </SafeAreaView>
         </ImageBackground>
@@ -175,3 +180,4 @@ const styles = StyleSheet.create({
 
 
 export default UploadMediaFile;
+
