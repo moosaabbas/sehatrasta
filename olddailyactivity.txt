@@ -1,0 +1,107 @@
+import React, { useState } from 'react';
+import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
+import { getAuth } from 'firebase/auth';
+import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
+
+const DailyActivity = () => {
+  const [activity, setActivity] = useState('');
+  const [duration, setDuration] = useState('');
+  const [caloriesBurned, setCaloriesBurned] = useState(null);
+  const [goalMessage, setGoalMessage] = useState(''); // State to store goal message
+  const firestore = getFirestore();
+  const auth = getAuth();
+  const user = auth.currentUser;
+  const userDocRef = doc(firestore, 'users', user.uid);
+
+  const fetchUserDetailsAndCalculateCalories = async () => {
+    const docSnap = await getDoc(userDocRef);
+    if (docSnap.exists()) {
+      const userData = docSnap.data();
+      const weightPounds = userData.currentWeight * 2.20462;  // Convert kg to lbs
+      fetchCaloriesBurned(weightPounds, activity, duration, userData.dailyCalorieGoal);
+    } else {
+      console.log("No user document!");
+    }
+  };
+
+  const fetchCaloriesBurned = async (weight, activity, duration, dailyCalorieGoal) => {
+    try {
+      const url = `https://api.api-ninjas.com/v1/caloriesburned?activity=${encodeURIComponent(activity)}&weight=${weight}&duration=${duration}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': '3FUcQPj9gx2UZZd4hBQrdQ==p8hNU32iRPfILSWR'  // Replace 'YOUR_API_KEY' with your actual API key
+        }
+      });
+      const data = await response.json();
+      if (!data || data.length == 0 || data[0].total_calories === undefined) {
+        console.error("Calories data not found or incomplete response", data);
+        return; // Exit if no data or missing total_calories
+      }
+      setCaloriesBurned(data[0].total_calories);
+      updateDailyActivity(data[0].total_calories, dailyCalorieGoal);
+    } catch (error) {
+      console.error("Failed to fetch calories", error);
+    }
+  };
+
+  const updateDailyActivity = async (calories, goal) => {
+    try {
+      await updateDoc(userDocRef, {
+        dailyActivity: { activity, duration, calories }
+      });
+      checkGoal(calories, goal);
+    } catch (error) {
+      console.error("Error updating user activity", error);
+    }
+  };
+
+  const checkGoal = (calories, goal) => {
+    const message = calories >= goal ? 'Goal met or exceeded!' : 'Under the goal.';
+    setGoalMessage(message);
+  };
+
+  return (
+    <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Activity"
+        value={activity}
+        onChangeText={setActivity}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Duration (in minutes)"
+        keyboardType="numeric"
+        value={duration}
+        onChangeText={setDuration}
+      />
+      <Button title="Log Activity" onPress={fetchUserDetailsAndCalculateCalories} />
+      {caloriesBurned && <Text>Calories Burned: {caloriesBurned}</Text>}
+      {goalMessage && <Text style={styles.goalText}>{goalMessage}</Text>} {/* Display goal message */}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 10,
+    paddingHorizontal: 10
+  },
+  goalText: {
+    marginTop: 20,
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'green' // Styling for the goal message
+  }
+});
+
+export default DailyActivity;
