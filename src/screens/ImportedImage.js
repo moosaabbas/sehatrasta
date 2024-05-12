@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, StyleSheet, SafeAreaView, ActivityIndicator, Text, ImageBackground, FlatList } from 'react-native';
+import { View, Image, StyleSheet, SafeAreaView, ActivityIndicator, Text, ImageBackground, FlatList, Modal, TouchableOpacity, Dimensions } from 'react-native';
 import { firebase } from "../../firebaseConfig";
 
 const ImportedImage = ({ route }) => {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState(null); // State to track the selected image
+  const [modalVisible, setModalVisible] = useState(false); // State to control the modal visibility
 
   useEffect(() => {
     const fetchImagesFromFirestore = async () => {
@@ -18,7 +20,6 @@ const ImportedImage = ({ route }) => {
         }
       } catch (error) {
         console.error('Error fetching images:', error);
-        // Handle errors (consider showing an error message to the user)
       } finally {
         setLoading(false); // Data fetching is complete
       }
@@ -27,8 +28,15 @@ const ImportedImage = ({ route }) => {
     fetchImagesFromFirestore();
   }, []);
 
+  const handleImagePress = (imageUri) => {
+    setSelectedImage(imageUri); // Set the selected image URI
+    setModalVisible(true); // Show the modal
+  };
+
   const renderItem = ({ item }) => (
-    <Image source={{ uri: item }} style={importedStyles.galleryImage} />
+    <TouchableOpacity onPress={() => handleImagePress(item)}>
+      <Image source={{ uri: item }} style={importedStyles.galleryImage} />
+    </TouchableOpacity>
   );
 
   return (
@@ -46,21 +54,39 @@ const ImportedImage = ({ route }) => {
             data={images}
             renderItem={renderItem}
             keyExtractor={(item, index) => index.toString()}
-            numColumns={2} // 2 columns for a gallery-like layout
+            numColumns={2} 
             contentContainerStyle={importedStyles.galleryContainer}
           />
         ) : (
           <Text style={importedStyles.noImagesText}>No images found</Text>
         )}
+
+        {/* Modal to display the selected image */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={importedStyles.modalContainer}>
+            <Image source={{ uri: selectedImage }} style={importedStyles.modalImage} />
+            <TouchableOpacity onPress={() => setModalVisible(false)} style={importedStyles.closeButton}>
+              <Text style={importedStyles.closeButtonText}>X</Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
       </SafeAreaView>
     </ImageBackground>
   );
 };
 
+const screenWidth = Dimensions.get('window').width;
+const imageWidth = (screenWidth - 40) / 2; // Adjusted width calculation with even spacing
+
 const importedStyles = StyleSheet.create({
     backgroundImage: {
         flex: 1,
-        resizeMode: 'cover', // or 'contain' depending on your preference
+        resizeMode: 'cover', // or 'contain' 
         justifyContent: 'center',
     },
     headerContainer: {
@@ -78,32 +104,48 @@ const importedStyles = StyleSheet.create({
         color: '#03161c'
     },
     container: {
-        flex: 1
-    },
-    imageContainer: {
         flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    image: {
-        width: '90%', 
-        height: '90%',
-        resizeMode: 'contain',
+        alignItems: 'center', // Center content horizontally
     },
     galleryContainer: {
-        padding: 10,
+        justifyContent: 'center', // Center content vertically
+        paddingHorizontal: 10, // Adjusted padding for even spacing
       },
       galleryImage: {
-        width: '45%', // Adjust as needed for spacing
-        height: 200, // Adjust as needed
-        margin: 10,
+        width: imageWidth,
+        height: imageWidth, // Keeping aspect ratio square
+        margin: 5,
         resizeMode: 'cover', // Or 'contain' if you don't want to crop
       },
       noImagesText: {
         textAlign: 'center',
         fontSize: 18,
         marginTop: 20,
+      },
+      modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.9)', // Semi-transparent background for the modal
+      },
+      modalImage: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'contain',
+      },
+      closeButton: {
+        position: 'absolute',
+        top: 50,
+        right: 20,
+        backgroundColor: '#ffffff',
+        padding: 10,
+        borderRadius: 10,
+      },
+      closeButtonText: {
+        fontSize: 16,
+        color: '#000000',
       }
 });
 
 export default ImportedImage;
+
