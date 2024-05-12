@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, StyleSheet, SafeAreaView, ActivityIndicator, Text, ImageBackground, FlatList, Modal, TouchableOpacity, Dimensions } from 'react-native';
+import { Alert, View, Image, StyleSheet, SafeAreaView, ActivityIndicator, Text, ImageBackground, FlatList, Modal, TouchableOpacity, Dimensions } from 'react-native';
 import { firebase } from "../../firebaseConfig";
+import { Ionicons } from '@expo/vector-icons';
+
 
 const ImportedImage = ({ route }) => {
   const [images, setImages] = useState([]);
@@ -34,10 +36,50 @@ const ImportedImage = ({ route }) => {
   };
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity onPress={() => handleImagePress(item)}>
-      <Image source={{ uri: item }} style={importedStyles.galleryImage} />
-    </TouchableOpacity>
+    <View style={importedStyles.imageContainer}>
+      <TouchableOpacity onPress={() => handleImagePress(item)}>
+        <Image source={{ uri: item }} style={importedStyles.galleryImage} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={importedStyles.deleteButton}
+        onPress={() => handleDeleteImage(item)}
+      >
+        <Ionicons name="close-circle" size={24} color="red" /> 
+      </TouchableOpacity>
+    </View>
   );
+
+  const handleDeleteImage = async (imageUri) => {
+    Alert.alert(
+      "Confirm Delete",
+      "Are you sure you want to delete this record?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Delete",
+          onPress: async () => {
+            try {
+              const user = firebase.auth().currentUser;
+              if (user) {
+                // Update Firestore
+                await firebase.firestore().collection('users').doc(user.uid).update({
+                  images: firebase.firestore.FieldValue.arrayRemove(imageUri)
+                });
+
+                // Update local state
+                setImages(images.filter(img => img !== imageUri)); 
+              }
+            } catch (error) {
+              console.error("Error deleting image:", error);
+            }
+          }
+        }
+      ]
+    );
+  };
 
   return (
     <ImageBackground source={require('../assets/bg-med.jpg')} style={importedStyles.backgroundImage}>
@@ -109,12 +151,12 @@ const importedStyles = StyleSheet.create({
     },
     galleryContainer: {
         justifyContent: 'center', // Center content vertically
-        paddingHorizontal: 10, // Adjusted padding for even spacing
+
       },
       galleryImage: {
         width: imageWidth,
         height: imageWidth, // Keeping aspect ratio square
-        margin: 5,
+        margin: 1,
         resizeMode: 'cover', // Or 'contain' if you don't want to crop
       },
       noImagesText: {
@@ -144,6 +186,15 @@ const importedStyles = StyleSheet.create({
       closeButtonText: {
         fontSize: 16,
         color: '#000000',
+      },
+      imageContainer: { // New style for the image and delete button container
+        position: 'relative', 
+        margin: 5,
+      },
+      deleteButton: {
+        position: 'absolute',
+        top: 5,
+        right: 5,
       }
 });
 
