@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Video } from 'expo-av';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const WelcomeScreen = () => {
   const video = useRef(null);
@@ -19,6 +20,11 @@ const WelcomeScreen = () => {
         resizeMode="cover"
         shouldPlay
         isLooping
+      />
+      <LinearGradient
+        colors={['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 1)']}
+
+        style={styles.gradient}
       />
       <View style={styles.bottomContainer}>
         <Text style={styles.headingText}>sehat rasta app</Text>
@@ -47,6 +53,13 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
   },
+  gradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '50%',
+  },
   bottomContainer: {
     position: 'absolute',
     bottom: 60,
@@ -71,7 +84,7 @@ const styles = StyleSheet.create({
   signUpButton: {
     backgroundColor: 'black',
     borderColor: 'grey',
-    borderWidth: 1.5,
+
   },
   buttonText: {
     color: 'white',
