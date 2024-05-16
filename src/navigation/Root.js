@@ -14,8 +14,9 @@ const Root = () => {
   const getData = async () => {
     try {
       const jsonValue = await AsyncStorage.getItem('userDetail')
-      console.log('value from root', jsonValue);
-      dispatch({ type: "setUser", payload: jsonValue })
+      parsedValue = JSON.parse(jsonValue)
+
+      dispatch({ type: "setUser", payload: parsedValue })
       return jsonValue != null ? JSON.parse(jsonValue) : null;
     } catch(e) {
       console.log('error from fetching async data', e);

@@ -1,6 +1,7 @@
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Dashboard from '../screens/Dashboard';
+import Pregnancy from '../screens/Pregnancy';
 
 
 const MainStack = () => {
@@ -8,10 +9,17 @@ const MainStack = () => {
   
     return (
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="WelcomeScreen">
+        <Stack.Navigator initialRouteName="Dashboard">
           <Stack.Screen
             name="Dashboard"
             component={Dashboard}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Pregnancy"
+            component={Pregnancy}
             options={{
               headerShown: false,
             }}

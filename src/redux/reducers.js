@@ -17,6 +17,8 @@ const storeData = async (value) => {
 const userDetail = (state = initialState, action) => {
   switch (action.type) {
     case "setUser":
+      console.log("value received", action.payload);
+      storeData(action.payload)
       return {
         ...state,
         user: action.payload,
