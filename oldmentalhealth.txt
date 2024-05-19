@@ -1,0 +1,89 @@
+import React, { useState } from 'react';
+import { View, TextInput, Button, Text, StyleSheet, ScrollView } from 'react-native';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+
+const MentalHealthSurvey = () => {
+    const questions = {
+        "Describe how you have been feeling emotionally over the past week. What specific moments or events influenced these feelings?": '',
+        "Reflect on your stress levels recently. Can you share an example of what has been causing you stress?": '',
+        "How do you usually cope when you feel overwhelmed or anxious?": '',
+        "Discuss the quality of your sleep. How has it been lately?": '',
+        "How supported do you feel by your social network?": '',
+        "What are your current concerns or challenges regarding your mental health?": ''
+    };
+
+    const [answers, setAnswers] = useState(questions);
+
+    const firestore = getFirestore();
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (!user) {
+        return <View><Text>Please log in to fill out the survey.</Text></View>;
+    }
+
+    const userDocRef = doc(firestore, 'users', user.uid);
+
+    const handleInputChange = (question, text) => {
+        setAnswers(prevAnswers => ({
+            ...prevAnswers,
+            [question]: text
+        }));
+    };
+
+    const handleSubmit = async () => {
+        if (Object.values(answers).some(answer => !answer)) {
+            alert('Please answer all questions.');
+            return;
+        }
+
+        try {
+            await setDoc(userDocRef, { mentalHealthResponses: answers }, { merge: true });
+            alert('Responses saved successfully.');
+        } catch (error) {
+            console.error("Error saving responses: ", error);
+            alert('Failed to save responses.');
+        }
+    };
+
+    return (
+        <ScrollView style={styles.container}>
+            {Object.keys(questions).map((question) => (
+                <View key={question} style={styles.questionContainer}>
+                    <Text style={styles.question}>{question}</Text>
+                    <TextInput
+                        style={styles.input}
+                        multiline
+                        onChangeText={(text) => handleInputChange(question, text)}
+                        value={answers[question]}
+                    />
+                </View>
+            ))}
+            <Button title="Submit" onPress={handleSubmit} />
+        </ScrollView>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        padding: 10
+    },
+    questionContainer: {
+        marginBottom: 20
+    },
+    question: {
+        fontSize: 16,
+        marginBottom: 5
+    },
+    input: {
+        height: 100,
+        borderColor: 'gray',
+        borderWidth: 1,
+        padding: 10,
+        textAlignVertical: 'top'
+    }
+});
+
+export default MentalHealthSurvey;

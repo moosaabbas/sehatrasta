@@ -58,7 +58,7 @@ const SignupScreen = () => {
         await createInitialUserRecordThroughEmail(userCredential.user, fullName); // Pass full name
         dispatch({ type: "setUser", payload: userCredential.user });
         setLoading(false);
-        navigation.navigate("GoalForm"); // Navigate to goals form after sign up
+        navigation.navigate("Mental Health"); // Navigate to goals form after sign up
       } catch (error) {
         setLoading(false);
         console.error("Signup error:", error.message);

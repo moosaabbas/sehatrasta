@@ -3,12 +3,14 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Dashboard from '../screens/Dashboard';
 import GoalForm from '../screens/goalform';
 import DailyActivity from '../screens/dailyActivity';
+import MentalHealth from '../screens/MentalHealth'; // Import the MentalHealth component
+
 const MainStack = () => {
   const Stack = createNativeStackNavigator();
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="GoalForm">
+      <Stack.Navigator initialRouteName="MentalHealth">
         <Stack.Screen
           name="Dashboard"
           component={Dashboard}
@@ -23,9 +25,16 @@ const MainStack = () => {
             headerShown: false,
           }}
         />
-         <Stack.Screen
+        <Stack.Screen
           name="DailyActivity"
           component={DailyActivity}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen // Add the MentalHealth screen to the stack
+          name="MentalHealth"
+          component={MentalHealth}
           options={{
             headerShown: false,
           }}
@@ -34,5 +43,6 @@ const MainStack = () => {
     </NavigationContainer>
   );
 };
+
 
 export default MainStack;
