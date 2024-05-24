@@ -1,30 +1,40 @@
-import { SafeAreaView, StyleSheet, Text, View } from "react-native";
+// Root.js
+import { SafeAreaView, StyleSheet } from "react-native";
 import React, { useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AuthStack from "./AuthStack";
 import MainStack from "./MainStack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useDispatch } from "react-redux";
+import { firebase } from "../../firebaseConfig"; // Ensure this is correctly imported
 
 const Root = () => {
   const userDetail = useSelector((state) => state.user);
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
 
   const getData = async () => {
     try {
-      const jsonValue = await AsyncStorage.getItem('userDetail')
-      parsedValue = JSON.parse(jsonValue)
-
-      dispatch({ type: "setUser", payload: parsedValue })
-      return jsonValue != null ? JSON.parse(jsonValue) : null;
-    } catch(e) {
-      console.log('error from fetching async data', e);
+      const jsonValue = await AsyncStorage.getItem('userDetail');
+      const parsedValue = JSON.parse(jsonValue);
+      if (parsedValue) {
+        dispatch({ type: "setUser", payload: parsedValue });
+      }
+    } catch (e) {
+      console.log('Error fetching async data', e);
     }
-  }
-  useEffect(()=> {
-    getData()
-  },[])
+  };
+
+  useEffect(() => {
+    getData();
+    const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        dispatch({ type: "setUser", payload: user });
+      } else {
+        dispatch({ type: "setUser", payload: null });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

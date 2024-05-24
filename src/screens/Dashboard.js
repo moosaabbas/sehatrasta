@@ -1,3 +1,4 @@
+// Dashboard.js
 import React from "react";
 import {
   StyleSheet,
@@ -6,34 +7,54 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-  ImageBackground,
   FlatList,
 } from "react-native";
 import {
-  FontAwesome5,
   MaterialIcons,
   MaterialCommunityIcons,
   Ionicons,
 } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 
+// Define the DoctorCard component
+const DoctorCard = ({ doctor }) => {
+  return (
+    <View style={styles.card}>
+      <Image source={doctor.imageUrl} style={styles.image} />
+      <View style={styles.info}>
+        <Text style={styles.name}>{doctor.doctorName}</Text>
+        <Text style={styles.timing}>{doctor.timing}</Text>
+        <Text style={styles.availability}>{doctor.availability}</Text>
+      </View>
+    </View>
+  );
+};
 
 const Dashboard = () => {
   const navigation = useNavigation();
 
   const featuresData = [
-    { key: "1", icon: "clipboard-pulse-outline", text: "Symptom Checker" },
-    { key: "2", icon: "phone-in-talk", text: "Pregnancy Tracker", redirection: "Pregnancy"},
-    { key: "3", icon: "shield-account-outline", text: "Insurance Assistance" },
-    { key: "4", icon: "heart-pulse", text: "Health Monitoring" },
-    { key: "5", icon: "pill", text: "Medication Reminders" },
-    { key: "6", icon: "file-document-edit-outline", text: "Scan Your Report" },
+    { key: "1", icon: "clipboard-pulse-outline", text: "Symptom Checker", redirection: "MedChecker" },
+    { key: "2", icon: "phone-in-talk", text: "Pregnancy Tracker", redirection: "Pregnancy" },
+    { key: "3", icon: "shield-account-outline", text: "Mental Guidance", redirection: "MentalHealth" },
+    { key: "4", icon: "heart-pulse", text: "Calorie Goals", redirection: "GoalForm" },
+    { key: "5", icon: "pill", text: "Daily Calories Tracking", redirection: "DailyActivity" },
+    { key: "6", icon: "file-document-edit-outline", text: "Scan Your Report", redirection: "HealthRecord" },
   ];
+
+  const renderFeature = ({ item }) => (
+    <View style={styles.feature}>
+      <TouchableOpacity style={styles.iconContainer} onPress={() => item.redirection && navigation.navigate(item.redirection)}>
+        <MaterialCommunityIcons name={item.icon} size={30} color="#4A90E2" />
+        <Text style={styles.featureTextCenter}>{item.text}</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   const doctorsData = [
     {
       key: "1",
-      doctorName: "Dr. Emily Stone",
+      doctorName: "Dr. Mohammad",
       timing: "9:00 AM - 5:00 PM",
       availability: "Available",
       imageUrl: require("../assets/images/chatbot.png")
@@ -74,7 +95,6 @@ const Dashboard = () => {
         <View
           style={{ width: 150, flexDirection: "row", alignItems: "center" }}
         >
-          {/* <Image source={require('../assets/images/logo.png')} style={styles.sehatRasta} /> */}
           <Text style={styles.headerText}>Hello, Robertson!</Text>
         </View>
         <TouchableOpacity>
@@ -86,7 +106,10 @@ const Dashboard = () => {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        <TouchableOpacity style={styles.aiHeader}>
+        <TouchableOpacity
+          style={styles.aiHeader}
+          onPress={() => navigation.navigate('ChatAssistant')}
+        >
           <Image
             source={require("../assets/images/chatbot.png")}
             style={styles.chatBot}
@@ -94,7 +117,7 @@ const Dashboard = () => {
           <Text style={styles.aiText}>
             Discover Our Healthcare Chat Assistant
           </Text>
-          <View onPress={() => navigation.goBack()} style={styles.arrow}>
+          <View style={styles.arrow}>
             <Ionicons
               name={"chevron-forward"}
               size={40}
@@ -114,7 +137,7 @@ const Dashboard = () => {
               data={featuresData}
               renderItem={renderFeature}
               keyExtractor={(item) => item.key}
-              numColumns={3} // Set the number of columns to 3
+              numColumns={3}
               horizontal={false}
               columnWrapperStyle={styles.featuresGrid}
             />
@@ -139,28 +162,6 @@ const Dashboard = () => {
   );
 };
 
-const renderFeature = ({ item }) => (
-  <View style={styles.feature}>
-    <TouchableOpacity style={styles.iconContainer} onPress={ navigation.navigate('Pregnancy')}>
-      <MaterialCommunityIcons name={item.icon} size={30} color="#4A90E2" />
-      <Text style={styles.featureTextCenter}>{item.text}</Text>
-    </TouchableOpacity>
-  </View>
-);
-
-const DoctorCard = ({ doctor }) => {
-  return (
-    <View style={styles.card}>
-      <Image source={doctor.imageUrl} style={styles.image} />
-      <View style={styles.info}>
-        <Text style={styles.name}>{doctor.doctorName}</Text>
-        <Text style={styles.timing}>{doctor.timing}</Text>
-        <Text style={styles.availability}>{doctor.availability}</Text>
-      </View>
-    </View>
-  );
-};
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -171,7 +172,6 @@ const styles = StyleSheet.create({
     height: 40,
     marginRight: 10,
   },
-
   header: {
     height: 140,
     flexDirection: "row",
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   feature: {
-    width: "32%", // Adjust width according to your container size
+    width: "32%",
     alignItems: "center",
   },
   iconContainer: {
@@ -232,10 +232,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#2C3E50",
   },
-
   aiText: {
     width: 200,
-
     fontSize: 16,
     color: "#fff",
     flex: 1,
@@ -249,7 +247,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   card: {
-    width: 300, // Set width to make sure the card is properly sized
+    width: 300,
     marginRight: 10,
     backgroundColor: "white",
     borderRadius: 10,

@@ -1,34 +1,86 @@
-import {NavigationContainer} from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+// MainStack.js
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Dashboard from '../screens/Dashboard';
 import Pregnancy from '../screens/Pregnancy';
-
+import ChatAssistant from '../screens/ChatAssistant';
+import MentalHealth from '../screens/MentalHealth';
+import DailyActivity from '../screens/dailyActivity'; 
+import GoalForm from '../screens/goalform';
+import MedChecker from '../screens/MedChecker';
+import HealthRecord from '../screens/HealthRecord';
+import ImportedImage from '../screens/ImportedImage';
 
 const MainStack = () => {
-    const Stack = createNativeStackNavigator();
-  
-    return (
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName="Dashboard">
-          <Stack.Screen
-            name="Dashboard"
-            component={Dashboard}
-            options={{
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="Pregnancy"
-            component={Pregnancy}
-            options={{
-              headerShown: false,
-            }}
-          />
-          
-        </Stack.Navigator>
-      </NavigationContainer>
-    );
-  };
-  
-  export default MainStack;
-  
+  const Stack = createNativeStackNavigator();
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Dashboard">
+        <Stack.Screen
+          name="Dashboard"
+          component={Dashboard}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="Pregnancy"
+          component={Pregnancy}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="ChatAssistant"
+          component={ChatAssistant}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="MentalHealth"
+          component={MentalHealth}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="DailyActivity"
+          component={DailyActivity}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="GoalForm"
+          component={GoalForm}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="MedChecker"  // Add this block
+          component={MedChecker}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="HealthRecord" // Add this line
+          component={HealthRecord}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="ImportedImage"
+          component={ImportedImage}
+          options={{ headerShown: false }} // or customize header here
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+};
+
+export default MainStack;
