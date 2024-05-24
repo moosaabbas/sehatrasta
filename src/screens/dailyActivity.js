@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, TextInput, Button, Text, StyleSheet, ImageBackground, TouchableOpacity, ScrollView
+  View, TextInput, TouchableOpacity, Text, StyleSheet, ImageBackground, ScrollView,
+  SafeAreaView
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getAuth } from 'firebase/auth';
@@ -78,11 +79,8 @@ const DailyActivity = () => {
   };
 
   return (
-    <ImageBackground 
-      source={require('../assets/images/Tommy-Stewart-Fieldweb.jpg')}
-      style={styles.backgroundImage}
-    >
-      <View style={styles.header}>
+    <View>
+      <SafeAreaView style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons
             name={"chevron-back"}
@@ -91,7 +89,7 @@ const DailyActivity = () => {
           />
         </TouchableOpacity>
         <Text style={styles.headerText}>Daily Activity</Text>
-      </View>
+      </SafeAreaView>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.container}>
           <TextInput
@@ -127,91 +125,92 @@ const DailyActivity = () => {
           {goalMessage && <Text style={styles.goalText}>{goalMessage}</Text>}
         </View>
       </ScrollView>
-    </ImageBackground>
+      </View>
   );
 };
 
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
-    width: '100%',
-    height: '100%',
+    resizeMode: 'cover',
     justifyContent: 'center',
-    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    backgroundColor: '#3F6ECA',
+    backgroundColor: 'rgba(0,0,0,0.5)', // Semi-transparent dark background for better visibility
     width: '100%',
     position: 'absolute',
     top: 0,
-    zIndex: 1,
   },
   backButton: {
-    marginRight: 10,
-    padding: 8,
-    borderRadius: 100,
-    backgroundColor: '#6894e8',
+    padding: 10,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.8)', // Light background with opacity for the button
   },
   headerText: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
+    flex: 1,
+    textAlign: 'center',
   },
   scrollViewContent: {
-    paddingTop: 60,
-    paddingBottom: 20,
+    paddingTop: 70, // Increased top padding
+    paddingBottom: 30,
     alignItems: 'center',
-    width: '100%', // Ensure the content takes the full width
+    width: '100%',
   },
   container: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)', // Slightly transparent background
+    borderRadius: 15,
     padding: 20,
     width: '90%',
     alignItems: 'center',
-    maxWidth: 400, // Limit the maximum width to avoid overly wide elements on large screens
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   input: {
-    height: 40,
-    borderColor: 'gray',
+    height: 50,
+    borderColor: '#ccc',
     borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 10,
+    marginBottom: 15,
+    paddingHorizontal: 15,
     backgroundColor: 'white',
-    borderRadius: 5,
-    width: '100%',
+    borderRadius: 10,
+    fontSize: 16,
   },
   picker: {
     height: 50,
     width: '100%',
-    marginBottom: 10,
+    marginBottom: 15,
   },
   button: {
-    backgroundColor: '#3F6ECA',
-    borderRadius: 5,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    backgroundColor: '#007AFF', // iOS blue for buttons
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
     alignItems: 'center',
-    marginVertical: 10,
     width: '100%',
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
   },
   caloriesText: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#333',
-    marginVertical: 5,
+    marginVertical: 10,
   },
   goalText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: 'green',
+    color: '#4CAF50', // Green color for goal messages
     marginTop: 10,
   },
 });

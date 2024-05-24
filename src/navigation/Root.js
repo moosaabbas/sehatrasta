@@ -1,12 +1,12 @@
-// Root.js
-import { SafeAreaView, StyleSheet } from "react-native";
 import React, { useEffect } from "react";
+import { StyleSheet } from "react-native";
 import { useSelector, useDispatch } from "react-redux";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { NavigationContainer } from "@react-navigation/native";
 import AuthStack from "./AuthStack";
 import MainStack from "./MainStack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { firebase } from "../../firebaseConfig"; // Ensure this is correctly imported
+import { firebase } from "../../firebaseConfig";
 
 const Root = () => {
   const userDetail = useSelector((state) => state.user);
@@ -38,7 +38,9 @@ const Root = () => {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {userDetail == null ? <AuthStack /> : <MainStack />}
+      <NavigationContainer>
+        {userDetail == null ? <AuthStack /> : <MainStack />}
+      </NavigationContainer>
     </GestureHandlerRootView>
   );
 };

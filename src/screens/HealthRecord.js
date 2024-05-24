@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert, Image, ImageBackground, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Alert, Image, ImageBackground, ActivityIndicator, StatusBar } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { firebase } from "../../firebaseConfig";
@@ -8,6 +8,7 @@ import 'firebase/compat/auth';
 import 'firebase/compat/storage';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';  // Import Ionicons
+import { Light_Purple, Purple } from '../assets/utils/palette';
 
 const UploadMediaFile = () => {
     const [uploading, setUploading] = useState(false);
@@ -84,13 +85,24 @@ const UploadMediaFile = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Ionicons name={"chevron-back"} size={30} style={{ color: "white" }} />
-                </TouchableOpacity>
-                <Text style={styles.headerText}>Upload Medical Records</Text>
-            </View>
-            <ImageBackground source={require('../assets/images/bg-med.jpg')} style={styles.backgroundImage}>
+            <StatusBar/>
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
+              <Ionicons
+                name={"chevron-back"}
+                size={30}
+                style={{ color: "white" }}
+              />
+            </TouchableOpacity>
+            <Text style={styles.headerText}>
+                Scan your reports
+            </Text>
+            <View style={styles.placeholder}></View>
+          </View>
+            <View source={require('../assets/images/bg-med.jpg')} style={styles.backgroundImage}>
                 <View style={styles.formContainer}>
                     <Text style={styles.subHeaderText}>Choose an image to upload</Text>
                     <Image source={require('../assets/images/upload-icon2.png')} style={styles.uploadIcon} />
@@ -105,7 +117,7 @@ const UploadMediaFile = () => {
                         <Text style={styles.buttonText}>View Files</Text>
                     </TouchableOpacity>
                 </View>
-            </ImageBackground>
+            </View>
         </SafeAreaView>
     );
 };
@@ -116,24 +128,27 @@ const styles = StyleSheet.create({
         backgroundColor: '#F6F6F6',
     },
     header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 15,
-        backgroundColor: '#3F6ECA',
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
-    },
-    backButton: {
-        marginRight: 10,
-        padding: 8,
-        borderRadius: 100,
-        backgroundColor: '#6894e8',
-    },
-    headerText: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#fff',
-    },
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 10,
+  },
+  headerText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: Purple,
+    flex: 1,
+    textAlign: "center",
+  },
+  backButton: {
+    padding: 8,
+    backgroundColor: Light_Purple,
+    borderRadius: 100,
+  },
+  placeholder: {
+    width: 22,
+    height: 48,
+  },
     backgroundImage: {
         flex: 1,
         resizeMode: 'cover',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Text,
   View,
@@ -10,12 +10,19 @@ import {
   Image,
   SafeAreaView,
   StatusBar,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
-import fetch from 'node-fetch';
-import { BackgroundColor, Light_Purple, Purple, White } from '../assets/utils/palette';
+  KeyboardAvoidingView,
+  Platform
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import FontAwesome5 from "react-native-vector-icons/FontAwesome5";
+import fetch from "node-fetch";
+import {
+  BackgroundColor,
+  Light_Purple,
+  Purple,
+  White,
+} from "../assets/utils/palette";
 
 const apiKey = "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";
 const chatCompletionUrl = "https://api.groq.com/openai/v1/chat/completions"; // Correct endpoint
@@ -61,26 +68,34 @@ const BoldText = ({ text }) => {
 
 const ChatAssistant = () => {
   const navigation = useNavigation();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+  const [inputHeight, setInputHeight] = useState(30); // Initial height of the input
+
+  const handleTextInputChange = (text) => {
+    setQuery(text);
+    // Automatically adjust height based on content, up to a maximum
+    setInputHeight(Math.min(200, Math.max(40, text.split('\n').length * 20 + 20)));
+  };
 
   const fetchAdvice = async () => {
     setLoading(true);
-    setError('');
-    const userMessage = { text: query, sender: 'user' };
+    setError("");
+    const userMessage = { text: query, sender: "user" };
     setMessages([...messages, userMessage]);
-    setQuery('');
+    setQuery("");
 
     const chatPayload = {
-      model: 'llama3-8b-8192',
+      model: "llama3-8b-8192",
       messages: [
         {
-          role: 'system',
-          content: "You're the best doctor. Based on the medical queries you get answer them. In case of a non medical query just reply 'I dont answer non medical questions'.",
+          role: "system",
+          content:
+            "You're the best doctor. Based on the medical queries you get answer them. In case of a non medical query just reply 'I dont answer non medical questions'.",
         },
-        { role: 'user', content: query },
+        { role: "user", content: query },
       ],
       temperature: 0.6,
       max_tokens: 1024,
@@ -89,10 +104,10 @@ const ChatAssistant = () => {
 
     try {
       const response = await fetch(chatCompletionUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(chatPayload),
       });
@@ -104,37 +119,34 @@ const ChatAssistant = () => {
       const data = await response.json();
       const { choices } = data;
       if (choices && choices.length > 0) {
-        const botMessage = { text: choices[0].message.content, sender: 'bot' };
+        const botMessage = { text: choices[0].message.content, sender: "bot" };
         setMessages((prevMessages) => [...prevMessages, botMessage]);
       }
     } catch (error) {
-      console.error('Error during chat completion:', error);
-      setError('Failed to fetch advice. Please try again.');
+      console.error("Error during chat completion:", error);
+      setError("Failed to fetch advice. Please try again.");
     } finally {
       setLoading(false);
     }
   };
   StatusBar.setBarStyle("dark-content");
-  
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar />
       <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={styles.backButton}
-            >
-              <Ionicons
-                name={"chevron-back"}
-                size={30}
-                style={{ color: "white" }}
-              />
-            </TouchableOpacity>
-            <Text style={styles.headerText}>
-              Medication Interaction Checker
-            </Text>
-            <View style={styles.placeholder}></View>
-          </View>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Ionicons
+            name={"chevron-back"}
+            size={30}
+            style={{ color: "white" }}
+          />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Medication Interaction Checker</Text>
+        <View style={styles.placeholder}></View>
+      </View>
       <ScrollView style={styles.scrollView}>
         <View style={styles.chatContainer}>
           {messages.map((message, index) => (
@@ -142,7 +154,7 @@ const ChatAssistant = () => {
               key={index}
               style={[
                 styles.chatBubble,
-                message.sender === 'user'
+                message.sender === "user"
                   ? styles.userBubble
                   : styles.botBubble,
               ]}
@@ -154,22 +166,31 @@ const ChatAssistant = () => {
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
         </View>
       </ScrollView>
-      <View style={styles.inputContainer}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={0}
+      >
+        <View style={styles.inputContainer}>
         <TextInput
-          style={styles.input}
-          placeholder="Describe your medical issue..."
-          value={query}
-          onChangeText={setQuery}
-          autoCorrect={false}
-        />
-        <TouchableOpacity style={styles.button} onPress={fetchAdvice}>
-        <FontAwesome5
-                name={"paper-plane"}
-                size={20}
-                style={{ color: BackgroundColor }}
-              />
-        </TouchableOpacity>
-      </View>
+            style={[styles.input, { height: inputHeight }]}
+            placeholder="Describe your medical issue..."
+            value={query}
+            onChangeText={handleTextInputChange}
+            autoCorrect={false}
+            multiline={true}
+            scrollEnabled={true}
+            maxHeight={200}
+            placeholderTextColor={Light_Purple}
+          />
+          <TouchableOpacity style={styles.button} onPress={fetchAdvice}>
+            <FontAwesome5
+              name={"paper-plane"}
+              size={20}
+              style={{ color: "white" }}
+            />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -206,52 +227,48 @@ const styles = StyleSheet.create({
   },
   chatContainer: {
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 10,
     marginVertical: 10,
-    flex:1,
-    minHeight: 618
+    flex: 1,
+    minHeight: 618,
   },
   chatBubble: {
     padding: 15,
     borderRadius: 20,
     marginVertical: 5,
-    maxWidth: '80%',
+    maxWidth: "80%",
   },
   userBubble: {
     backgroundColor: "#BCA5DD",
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     borderBottomRightRadius: 0,
   },
   botBubble: {
-    backgroundColor: '#E8E8E8',
-    alignSelf: 'flex-start',
+    backgroundColor: "#E8E8E8",
+    alignSelf: "flex-start",
     borderBottomLeftRadius: 0,
   },
   chatText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
+
   inputContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 10,
-    backgroundColor: BackgroundColor, // Set your desired color here
+    backgroundColor: BackgroundColor, 
     borderTopWidth: 1,
-    borderTopColor: '#ccc',
-    paddingBottom: 36
+    borderTopColor: "#ccc",
   },
   input: {
     flex: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderWidth: 1,
-    borderRadius: 25,
-    padding: 15,
+    borderRadius: 10,
+    paddingHorizontal: 10,
     fontSize: 16,
     marginRight: 10,
   },
@@ -259,28 +276,22 @@ const styles = StyleSheet.create({
     backgroundColor: Purple,
     borderRadius: 25,
     padding: 12,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 18,
-    
-    fontWeight: 'bold',
+    alignItems: "center",
   },
   normalText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   boldText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
   errorText: {
-    color: 'red',
+    color: "red",
     fontSize: 16,
     marginTop: 10,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
 

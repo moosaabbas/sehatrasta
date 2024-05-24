@@ -1,18 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { View, TextInput, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-import { Picker } from '@react-native-picker/picker';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  TextInput,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
+  StatusBar,
+  Platform,
+} from "react-native";
+import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import { Picker } from "@react-native-picker/picker";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import {
+  BackgroundColor,
+  Light_Purple,
+  Purple,
+  White,
+} from "../assets/utils/palette";
 
 const GoalForm = ({ navigation }) => {
-  const [currentWeight, setCurrentWeight] = useState('');
-  const [targetWeight, setTargetWeight] = useState('');
-  const [dailyCalorieGoal, setDailyCalorieGoal] = useState('');
-  const [gender, setGender] = useState('');
-  const [height, setHeight] = useState('');
-  const [age, setAge] = useState('');
-  const [activityLevel, setActivityLevel] = useState('sedentary');
+  const [currentWeight, setCurrentWeight] = useState("");
+  const [targetWeight, setTargetWeight] = useState("");
+  const [dailyCalorieGoal, setDailyCalorieGoal] = useState("");
+  const [gender, setGender] = useState("");
+  const [height, setHeight] = useState("");
+  const [age, setAge] = useState("");
+  const [activityLevel, setActivityLevel] = useState("sedentary");
   const [bmr, setBmr] = useState(0);
   const [deficitDays, setDeficitDays] = useState([]);
 
@@ -23,17 +39,25 @@ const GoalForm = ({ navigation }) => {
   useEffect(() => {
     const fetchUserData = async () => {
       if (user) {
-        const userDocRef = doc(firestore, 'users', user.uid);
+        const userDocRef = doc(firestore, "users", user.uid);
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
-          setCurrentWeight(data.currentWeight ? data.currentWeight.toString() : '');
-          setTargetWeight(data.targetWeight ? data.targetWeight.toString() : '');
-          setDailyCalorieGoal(data.dailyCalorieGoal ? data.dailyCalorieGoal.toString() : '');
-          setGender(data.gender ? data.gender : '');
-          setHeight(data.height ? data.height.toString() : '');
-          setAge(data.age ? data.age.toString() : '');
-          setActivityLevel(data.activityLevel ? data.activityLevel : 'sedentary');
+          setCurrentWeight(
+            data.currentWeight ? data.currentWeight.toString() : ""
+          );
+          setTargetWeight(
+            data.targetWeight ? data.targetWeight.toString() : ""
+          );
+          setDailyCalorieGoal(
+            data.dailyCalorieGoal ? data.dailyCalorieGoal.toString() : ""
+          );
+          setGender(data.gender ? data.gender : "");
+          setHeight(data.height ? data.height.toString() : "");
+          setAge(data.age ? data.age.toString() : "");
+          setActivityLevel(
+            data.activityLevel ? data.activityLevel : "sedentary"
+          );
         } else {
           console.log("No such document!");
         }
@@ -58,24 +82,25 @@ const GoalForm = ({ navigation }) => {
 
     if (!weight || !heightInCm || !userAge) return;
 
-    let bmrCalculation = gender === 'Male'
-      ? 10 * weight + 6.25 * heightInCm - 5 * userAge + 5
-      : 10 * weight + 6.25 * heightInCm - 5 * userAge - 161;
+    let bmrCalculation =
+      gender === "Male"
+        ? 10 * weight + 6.25 * heightInCm - 5 * userAge + 5
+        : 10 * weight + 6.25 * heightInCm - 5 * userAge - 161;
 
     switch (activityLevel) {
-      case 'sedentary':
+      case "sedentary":
         bmrCalculation *= 1.2;
         break;
-      case 'lightly active':
+      case "lightly active":
         bmrCalculation *= 1.375;
         break;
-      case 'moderately active':
+      case "moderately active":
         bmrCalculation *= 1.55;
         break;
-      case 'very active':
+      case "very active":
         bmrCalculation *= 1.725;
         break;
-      case 'extra active':
+      case "extra active":
         bmrCalculation *= 1.9;
         break;
     }
@@ -87,8 +112,9 @@ const GoalForm = ({ navigation }) => {
   const calculateDaysToGoal = (caloriesNeeded) => {
     const weightToLose = parseFloat(currentWeight) - parseFloat(targetWeight);
     const deficits = [300, 500, 700, 1000]; // Define different caloric deficits
-    const results = deficits.map(deficit => {
-      const dailyDeficit = caloriesNeeded - parseInt(dailyCalorieGoal) + deficit;
+    const results = deficits.map((deficit) => {
+      const dailyDeficit =
+        caloriesNeeded - parseInt(dailyCalorieGoal) + deficit;
       const caloriesToLoseWeight = weightToLose * 7700;
       const days = Math.ceil(caloriesToLoseWeight / dailyDeficit);
       return { deficit, days };
@@ -97,13 +123,20 @@ const GoalForm = ({ navigation }) => {
   };
 
   const handleUpdateGoals = async () => {
-    if (!currentWeight || !targetWeight || !dailyCalorieGoal || !gender || !height || !age) {
+    if (
+      !currentWeight ||
+      !targetWeight ||
+      !dailyCalorieGoal ||
+      !gender ||
+      !height ||
+      !age
+    ) {
       alert("Please fill all fields");
       return;
     }
 
     if (user) {
-      const userDocRef = doc(firestore, 'users', user.uid);
+      const userDocRef = doc(firestore, "users", user.uid);
       try {
         await updateDoc(userDocRef, {
           currentWeight: parseFloat(currentWeight),
@@ -113,10 +146,10 @@ const GoalForm = ({ navigation }) => {
           height: parseInt(height),
           age: parseInt(age),
           activityLevel,
-          caloriesBurnedAtRest: bmr
+          caloriesBurnedAtRest: bmr,
         });
-        alert('Goals updated successfully!');
-        navigation.navigate('DailyActivity');
+        alert("Goals updated successfully!");
+        navigation.navigate("DailyActivity");
       } catch (error) {
         console.error("Error updating goals: ", error);
       }
@@ -124,18 +157,24 @@ const GoalForm = ({ navigation }) => {
       alert("User is not authenticated");
     }
   };
+  StatusBar.setBarStyle("dark-content");
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar />
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
           <Ionicons
             name={"chevron-back"}
             size={30}
             style={{ color: "white" }}
           />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Set Your Goals</Text>
+        <Text style={styles.headerText}>Set your goal</Text>
+        <View style={styles.placeholder}></View>
       </View>
       <ScrollView style={styles.scrollView}>
         <View style={styles.formContainer}>
@@ -145,6 +184,7 @@ const GoalForm = ({ navigation }) => {
             keyboardType="numeric"
             onChangeText={setCurrentWeight}
             value={currentWeight}
+            placeholderTextColor={Light_Purple}
           />
           <TextInput
             style={styles.input}
@@ -152,6 +192,7 @@ const GoalForm = ({ navigation }) => {
             keyboardType="numeric"
             onChangeText={setTargetWeight}
             value={targetWeight}
+            placeholderTextColor={Light_Purple}
           />
           <TextInput
             style={styles.input}
@@ -159,12 +200,14 @@ const GoalForm = ({ navigation }) => {
             keyboardType="numeric"
             onChangeText={setDailyCalorieGoal}
             value={dailyCalorieGoal}
+            placeholderTextColor={Light_Purple}
           />
           <TextInput
             style={styles.input}
             placeholder="Gender"
             onChangeText={setGender}
             value={gender}
+            placeholderTextColor={Light_Purple}
           />
           <TextInput
             style={styles.input}
@@ -172,6 +215,7 @@ const GoalForm = ({ navigation }) => {
             keyboardType="numeric"
             onChangeText={setHeight}
             value={height}
+            placeholderTextColor={Light_Purple}
           />
           <TextInput
             style={styles.input}
@@ -179,17 +223,35 @@ const GoalForm = ({ navigation }) => {
             keyboardType="numeric"
             onChangeText={setAge}
             value={age}
+            placeholderTextColor={Light_Purple}
           />
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={activityLevel}
-              style={styles.picker}
-              onValueChange={(itemValue) => setActivityLevel(itemValue)}>
-              <Picker.Item label="Sedentary: little or no exercise" value="sedentary" />
-              <Picker.Item label="Lightly active: light exercise/sports 1-3 days/week" value="lightly active" />
-              <Picker.Item label="Moderately active: moderate exercise/sports 3-5 days/week" value="moderately active" />
-              <Picker.Item label="Very active: hard exercise/sports 6-7 days a week" value="very active" />
-              <Picker.Item label="Extra active: very hard exercise/physical job & exercise 2x/day" value="extra active" />
+              style={Platform.OS === "ios" ? styles.pickerIOS : styles.picker}
+              onValueChange={(itemValue) => setActivityLevel(itemValue)}
+              mode="dropdown" // You can use 'dialog' for Android if preferred
+            >
+              <Picker.Item
+                label="Sedentary: little or no exercise"
+                value="sedentary"
+              />
+              <Picker.Item
+                label="Lightly active: light exercise/sports 1-3 days/week"
+                value="lightly active"
+              />
+              <Picker.Item
+                label="Moderately active: moderate exercise/sports 3-5 days/week"
+                value="moderately active"
+              />
+              <Picker.Item
+                label="Very active: hard exercise/sports 6-7 days a week"
+                value="very active"
+              />
+              <Picker.Item
+                label="Extra active: very hard exercise/physical job & exercise 2x/day"
+                value="extra active"
+              />
             </Picker>
           </View>
           <TouchableOpacity style={styles.button} onPress={handleUpdateGoals}>
@@ -203,33 +265,36 @@ const GoalForm = ({ navigation }) => {
           ))}
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F6F6',
+    backgroundColor: BackgroundColor,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#3F6ECA',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-  },
-  backButton: {
-    marginRight: 10,
-    padding: 8,
-    borderRadius: 100,
-    backgroundColor: '#6894e8',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 10,
   },
   headerText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 18,
+    fontWeight: "bold",
+    color: Purple,
+    flex: 1,
+    textAlign: "center",
+  },
+  backButton: {
+    padding: 8,
+    backgroundColor: Light_Purple,
+    borderRadius: 100,
+  },
+  placeholder: {
+    width: 46,
+    height: 48,
   },
   scrollView: {
     marginHorizontal: 16,
@@ -237,55 +302,52 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowColor: "#000",
+    
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
+
   },
   input: {
     height: 50,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderWidth: 1,
     marginBottom: 15,
     paddingHorizontal: 15,
     borderRadius: 25,
-    backgroundColor: '#F6F6F6',
+    backgroundColor: "#F6F6F6",
   },
   pickerContainer: {
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderWidth: 1,
     borderRadius: 25,
-    backgroundColor: '#F6F6F6',
+    backgroundColor: "#F6F6F6",
     marginBottom: 15,
   },
   picker: {
     height: 50,
-    width: '100%',
+    width: "100%",
   },
   button: {
-    backgroundColor: '#3F6ECA',
+    backgroundColor: Purple,
     borderRadius: 25,
     paddingVertical: 15,
     paddingHorizontal: 20,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 10,
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   bmrText: {
     marginTop: 15,
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
 });
 
