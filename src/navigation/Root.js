@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import { StyleSheet, ActivityIndicator, View } from "react-native";
 import { useSelector, useDispatch } from "react-redux";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
@@ -7,16 +7,19 @@ import AuthStack from "./AuthStack";
 import MainStack from "./MainStack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { firebase } from "../../firebaseConfig";
+import { Purple } from "../assets/utils/palette";
 
 const Root = () => {
   const userDetail = useSelector((state) => state.user);
   const dispatch = useDispatch();
+  const [showStack, setShowStack] = useState(null);
+  const [loading, setLoading] = useState(true);  // State to control the ActivityIndicator
 
   const getData = async () => {
     try {
       const jsonValue = await AsyncStorage.getItem('userDetail');
-      const parsedValue = JSON.parse(jsonValue);
-      if (parsedValue) {
+      if (jsonValue) {
+        const parsedValue = JSON.parse(jsonValue);
         dispatch({ type: "setUser", payload: parsedValue });
       }
     } catch (e) {
@@ -36,10 +39,25 @@ const Root = () => {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    setTimeout(() => {
+      setShowStack(userDetail);
+      setLoading(false);  // Turn off the loading indicator after 2 seconds
+    }, 2500);
+  }, [userDetail]);
+
+  if (loading) {
+    return (
+      <View style={styles.centeredView}>
+        <ActivityIndicator size="large" color={Purple} />
+      </View>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NavigationContainer>
-        {userDetail == null ? <AuthStack /> : <MainStack />}
+        {showStack == null ? <AuthStack /> : <MainStack />}
       </NavigationContainer>
     </GestureHandlerRootView>
   );
@@ -47,4 +65,10 @@ const Root = () => {
 
 export default Root;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  }
+});

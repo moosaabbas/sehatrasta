@@ -11,6 +11,7 @@ import {
   Modal,
   Alert,
   Linking,
+  StatusBar,
 } from "react-native";
 import {
   MaterialIcons,
@@ -32,6 +33,8 @@ const Dashboard = () => {
   const [fullName, setFullName] = useState("");
   const [isModalVisible, setModalVisible] = useState(false);
 
+StatusBar.setBarStyle("dark-content");
+
   const [medicines, setMedicines] = useState([
     {
       name: "Paracetamol",
@@ -40,7 +43,7 @@ const Dashboard = () => {
     },
     { name: "Vitamin D", times: ["10:00"], days: ["Sat"] },
     {
-      name: "Supliments",
+      name: "Calcium Supliments",
       times: ["17:00", "21:00"],
       days: ["Thu", "Fri", "Sat", "Sun"],
     },
@@ -53,14 +56,24 @@ const Dashboard = () => {
   const renderMedicineSchedule = (medicine) => {
     return (
       <View style={styles.medicineContainer} key={medicine.name}>
-        <Text style={styles.medicineName}>{medicine.name}</Text>
-        <Text style={styles.medicineDetails}>{`Time: ${medicine.times.join(
-          ", "
-        )}`}</Text>
-        <Text style={styles.medicineDetails}>{`Days: ${medicine.days.join(
-          ", "
-        )}`}</Text>
+      <Text style={styles.medicineName}>{medicine.name}</Text>
+      <View style={styles.detailRow}>
+        <MaterialCommunityIcons name="clock-outline" size={20} color="#333" />
+        {medicine.times.map((time, index) => (
+          <View style={styles.timeBadge} key={index}>
+            <Text style={styles.timeText}>{time}</Text>
+          </View>
+        ))}
       </View>
+      <View style={styles.detailRow}>
+        <MaterialCommunityIcons name="calendar-blank-outline" size={20} color="#333" />
+        {medicine.days.map((day, index) => (
+          <View style={styles.dayBadge} key={index}>
+            <Text style={styles.dayText}>{day}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
     );
   };
 
@@ -258,18 +271,25 @@ const Dashboard = () => {
           <Text style={styles.headerText}>Hello, {fullName}!</Text>
         </View>
         <View style={styles.headerButtons}>
-          <TouchableOpacity onPress={toggleModal}>
-            <MaterialCommunityIcons
-              name="alarm-light"
-              size={30}
-              color="red"
-              style={styles.emergencyIcon}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={deleteData}>
-            <MaterialIcons name="logout" size={24} color={Purple} />
-          </TouchableOpacity>
+      <TouchableOpacity onPress={toggleModal}>
+        <View style={styles.ambulanceIconBadge}>
+          <MaterialCommunityIcons
+            name="ambulance"
+            size={28}
+            color="white"
+          />
         </View>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={deleteData}>
+        <View style={styles.iconBadge}>
+          <MaterialIcons
+            name="logout"
+            size={22}
+            color={Purple}
+          />
+        </View>
+      </TouchableOpacity>
+    </View>
       </View>
 
       <ScrollView
@@ -291,7 +311,7 @@ const Dashboard = () => {
             <Ionicons
               name={"chevron-forward"}
               size={40}
-              style={{ color: "black" }}
+              style={{ color: "white" }}
             />
           </View>
         </TouchableOpacity>
@@ -437,18 +457,31 @@ const styles = StyleSheet.create({
     maxWidth: "100%",
   },
   headerButtons: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconBadge: {
+    width: 40, // Adjust the size as needed
+    height: 40, // Adjust the size as needed
+    borderRadius: 25, // This makes the View circular
+    backgroundColor: '#E8F0FE', // Background color of the badge
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 5, // Optional, for spacing between buttons
+  },
+  ambulanceIconBadge: {
+    width: 40, // Adjust the size as needed
+    height: 40, // Adjust the size as needed
+    borderRadius: 25, // This makes the View circular
+    backgroundColor: 'red', // Background color of the badge
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 5, // Optional, for spacing between buttons
   },
   emergencyIcon: {
     marginRight: 10,
   },
-  sectionTitle: {
-    marginLeft: 6,
-    fontSize: 14,
-    fontWeight: 500,
-  },
-
+ 
   
 
 
@@ -470,11 +503,52 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8F0FE',
     borderRadius: 10,
   },
+
+
+  medicineContainer: {
+    marginBottom: 10,
+    padding: 10,
+    backgroundColor: '#E8F0FE',
+    borderRadius: 10,
+  },
   medicineName: {
     fontSize: 18,
     color: '#333',
     fontWeight: 'bold',
+    marginBottom: 5,
   },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  timeBadge: {
+    backgroundColor: '#d7e2f4',
+    marginLeft: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  dayBadge: {
+    backgroundColor: "#c3a3f0",
+    marginLeft: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  timeText: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: "600"
+  },
+  dayText: {
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: "600"
+  },
+
+
+  
   medicineDetails: {
     fontSize: 14,
     color: '#666',
