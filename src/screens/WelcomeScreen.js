@@ -23,11 +23,10 @@ const WelcomeScreen = () => {
       />
       <LinearGradient
         colors={['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 1)']}
-
         style={styles.gradient}
       />
       <View style={styles.bottomContainer}>
-        <Text style={styles.headingText}>sehat rasta app</Text>
+        <Text style={styles.headingText}>Sehat Rasta</Text>
         <TouchableOpacity
           style={styles.button}
           onPress={() => navigation.navigate('LoginScreen')}>

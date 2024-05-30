@@ -11,7 +11,7 @@ import {
   SafeAreaView,
   StatusBar,
   KeyboardAvoidingView,
-  Platform
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -77,7 +77,9 @@ const ChatAssistant = () => {
   const handleTextInputChange = (text) => {
     setQuery(text);
     // Automatically adjust height based on content, up to a maximum
-    setInputHeight(Math.min(200, Math.max(40, text.split('\n').length * 20 + 20)));
+    setInputHeight(
+      Math.min(200, Math.max(40, text.split("\n").length * 20 + 20))
+    );
   };
 
   const fetchAdvice = async () => {
@@ -171,7 +173,7 @@ const ChatAssistant = () => {
         keyboardVerticalOffset={0}
       >
         <View style={styles.inputContainer}>
-        <TextInput
+          <TextInput
             style={[styles.input, { height: inputHeight }]}
             placeholder="Describe your medical issue..."
             value={query}
@@ -259,7 +261,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 10,
-    backgroundColor: BackgroundColor, 
+    backgroundColor: BackgroundColor,
     borderTopWidth: 1,
     borderTopColor: "#ccc",
   },

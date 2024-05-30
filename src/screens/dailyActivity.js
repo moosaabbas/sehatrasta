@@ -79,8 +79,8 @@ const DailyActivity = () => {
   };
 
   return (
-    <View>
-      <SafeAreaView style={styles.header}>
+    <SafeAreaView>
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons
             name={"chevron-back"}
@@ -89,7 +89,7 @@ const DailyActivity = () => {
           />
         </TouchableOpacity>
         <Text style={styles.headerText}>Daily Activity</Text>
-      </SafeAreaView>
+      </View>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.container}>
           <TextInput
@@ -125,7 +125,7 @@ const DailyActivity = () => {
           {goalMessage && <Text style={styles.goalText}>{goalMessage}</Text>}
         </View>
       </ScrollView>
-      </View>
+      </SafeAreaView>
   );
 };
 

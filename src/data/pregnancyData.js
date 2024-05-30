@@ -33,7 +33,7 @@ const pregnancyTips = {
     "image": require('../assets/images/week8.jpg')  // Assuming the image for month 8 is named 'week8.jpg'
   },
   "month9": {
-    "tip": "Congratulations, you've made it to week 40! If you haven't gone into labor yet, your doctor might discuss induction. Stay patient; most babies arrive within two weeks of their due date. Keep in touch with your healthcare provider and prepare for the exciting arrival of your baby!",
+    "tip": "Congratulations, you've made it to week 40! If you haven't gone into labor yet, your doctor might discuss induction. Stay patient; most babies arrive within two weeks of their due date.",
     "image": require('../assets/images/month40.jpg')  // Assuming the image for month 9 is named 'week40.jpg'
   }
 };
