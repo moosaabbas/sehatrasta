@@ -32,48 +32,83 @@ const Dashboard = () => {
   const dispatch = useDispatch();
   const [fullName, setFullName] = useState("");
   const [isModalVisible, setModalVisible] = useState(false);
+  const [markedDates, setMarkedDates] = useState({});
+  const [medicines, setMedicines] = useState({});
 
-StatusBar.setBarStyle("dark-content");
+  StatusBar.setBarStyle("dark-content");
 
-  const [medicines, setMedicines] = useState([
-    {
-      name: "Paracetamol",
-      times: ["17:00", "21:00"],
-      days: ["Thu", "Fri", "Sat", "Sun"],
-    },
-    { name: "Vitamin D", times: ["10:00"], days: ["Sat"] },
-    {
-      name: "Calcium Supliments",
-      times: ["17:00", "21:00"],
-      days: ["Thu", "Fri", "Sat", "Sun"],
-    },
-    { name: "Vitamin C", times: ["10:00"], days: ["Sat"] },
-  ]);
+  // const [medicines, setMedicines] = useState([
+  //   {
+  //     name: "Paracetamol",
+  //     times: ["17:00", "21:00"],
+  //     days: ["Thu", "Fri", "Sat", "Sun"],
+  //   },
+  //   { name: "Vitamin D", times: ["10:00"], days: ["Sat"] },
+  //   {
+  //     name: "Calcium Supplements",
+  //     times: ["17:00", "21:00"],
+  //     days: ["Thu", "Fri", "Sat", "Sun"],
+  //   },
+  //   { name: "Vitamin C", times: ["10:00"], days: ["Sat"] },
+  // ]);
   const [selectedDate, setSelectedDate] = useState("");
   const [newMedicine, setNewMedicine] = useState("");
   const [daysToTake, setDaysToTake] = useState(0);
 
   const renderMedicineSchedule = (medicine) => {
     return (
-      <View style={styles.medicineContainer} key={medicine.name}>
-      <Text style={styles.medicineName}>{medicine.name}</Text>
-      <View style={styles.detailRow}>
-        <MaterialCommunityIcons name="clock-outline" size={20} color="#333" />
-        {medicine.times.map((time, index) => (
-          <View style={styles.timeBadge} key={index}>
-            <Text style={styles.timeText}>{time}</Text>
+      <View style={styles.medicineListContainer}>
+  {medicines.length > 0 ? (
+    medicines.map((medicine, index) => (
+      <View key={index} style={styles.medicineContainer}>
+        <Text style={styles.medicineName}>{medicine.medicineName}</Text>
+        
+        <View style={styles.detailRow}>
+          <MaterialCommunityIcons name="clock-outline" size={20} color="#333" />
+          <View style={styles.timeBadge}>
+            <Text style={styles.timeText}>{medicine.time}</Text>
           </View>
-        ))}
-      </View>
-      <View style={styles.detailRow}>
-        <MaterialCommunityIcons name="calendar-blank-outline" size={20} color="#333" />
-        {medicine.days.map((day, index) => (
-          <View style={styles.dayBadge} key={index}>
-            <Text style={styles.dayText}>{day}</Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <MaterialCommunityIcons name="calendar-range" size={20} color="#333" />
+          <View style={styles.dayBadge}>
+            <Text style={styles.dayText}>Start: {medicine.date}</Text>
           </View>
-        ))}
+          <View style={styles.dayBadge}>
+            <Text style={styles.dayText}>End: {medicine.endDate}</Text>
+          </View>
+        </View>
+
+        <View style={styles.detailRow}>
+          <MaterialCommunityIcons name="repeat" size={20} color="#333" />
+          <View style={styles.dayBadge}>
+            <Text style={styles.dayText}>Every {medicine.interval} Hours</Text>
+          </View>
+        </View>
+
+        <View style={styles.detailRow}>
+          <MaterialCommunityIcons name="calendar-check" size={20} color="#333" />
+          {medicine.frequency.toLowerCase().includes('daily') ? (
+            <View style={styles.dayBadge}>
+              <Text style={styles.dayText}>Daily</Text>
+            </View>
+          ) : (
+            medicine.frequency.split(',').map((day, index) => (
+              <View style={styles.dayBadge} key={index}>
+                <Text style={styles.dayText}>{day.trim()}</Text>
+              </View>
+            ))
+          )}
+        </View>
+
       </View>
-    </View>
+    ))
+  ) : (
+    <Text>No medicines to show</Text>
+  )}
+</View>
+
     );
   };
 
@@ -81,13 +116,12 @@ StatusBar.setBarStyle("dark-content");
     console.log(userDetail.uid);
     try {
       const user = firebase.auth().currentUser;
-
       const userDoc = await firebase
         .firestore()
         .collection("users")
         .doc(userDetail.uid)
         .get();
-      console.log("doc", userDoc);
+      console.log("doc", userDoc.data().medicines);
       if (userDoc.exists) {
         const userData = userDoc.data();
         setFullName(userData.fullName);
@@ -98,6 +132,8 @@ StatusBar.setBarStyle("dark-content");
       console.error("Error fetching user data:", error);
     }
   };
+
+  
 
   useEffect(() => {
     console.log("Dashboard component is mounted or focused");
@@ -110,24 +146,24 @@ StatusBar.setBarStyle("dark-content");
   }, [navigation]);
 
   const fetchMedicines = async () => {
-    console.log("fetch meds");
-    try {
-      const user = firebase.auth().currentUser;
-      if (user) {
+    if (userDetail && userDetail.uid) {
+      try {
         const medicinesDoc = await firebase
           .firestore()
-          .collection("medicines")
-          .doc(user.uid)
+          .collection("users")
+          .doc(userDetail.uid)
           .get();
         if (medicinesDoc.exists) {
-          setMedicines(medicinesDoc.data());
-          console.log("medicisnes coming", medicinesDoc.data());
+          const fetchedMedicines = medicinesDoc.data().medicines; // Directly access the medicines array
+          console.log("Fetched Medicines:", fetchedMedicines); // Log to verify data
+          setMedicines(fetchedMedicines); // Set state
         }
+      } catch (error) {
+        console.error("Error fetching medicines:", error);
       }
-    } catch (error) {
-      console.error("Error fetching medicines:", error);
     }
   };
+  
 
   const addMedicine = async () => {
     try {
@@ -342,50 +378,10 @@ StatusBar.setBarStyle("dark-content");
           <View>
             <ScrollView style={styles.scrollView}>
               <View style={styles.medicineListContainer}>
-                {/* <Text style={styles.sectionTitle}>Upcoming Medicines</Text> */}
-                {medicines.map((medicine) => renderMedicineSchedule(medicine))}
+                {Array.isArray(medicines) ? medicines.map((medicine) => renderMedicineSchedule(medicine)) : <Text>No medicines to show</Text>}
               </View>
             </ScrollView>
           </View>
-          {/* <Calendar
-            style={{borderRadius: 30}}
-            onDayPress={(day) => setSelectedDate(day.dateString)}
-            markedDates={getMarkedDates()}
-          />
-          {selectedDate && (
-            <View style={styles.medicineInputContainer}>
-              <Text style={styles.medicineInputLabel}>
-                Add Medicine for {selectedDate}:
-              </Text>
-              <TextInput
-                style={styles.medicineInput}
-                value={newMedicine}
-                onChangeText={setNewMedicine}
-              />
-              <TextInput
-                style={styles.daysInput}
-                placeholder="Days to take"
-                keyboardType="numeric"
-                value={daysToTake.toString()}
-                onChangeText={(text) => setDaysToTake(Number(text))}
-              />
-              <TouchableOpacity style={styles.addButton} onPress={addMedicine}>
-                <Text style={styles.addButtonText}>Add</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          {selectedDate && medicines[selectedDate] && (
-            <View style={styles.medicineList}>
-              <Text style={styles.medicineListTitle}>
-                Medicines for {selectedDate}:
-              </Text>
-              {medicines[selectedDate].map((medicine, index) => (
-                <Text key={index} style={styles.medicineListItem}>
-                  {medicine}
-                </Text>
-              ))}
-            </View>
-          )} */}
         </View>
       </ScrollView>
 
@@ -482,9 +478,6 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
  
-  
-
-
   scrollView: {
     margin: 8,
     flex: 1,
@@ -497,14 +490,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  medicineContainer: {
-    marginBottom: 10,
-    padding: 10,
-    backgroundColor: '#E8F0FE',
-    borderRadius: 10,
-  },
-
-
   medicineContainer: {
     marginBottom: 10,
     padding: 10,
@@ -546,17 +531,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: "600"
   },
-
-
-  
-  medicineDetails: {
-    fontSize: 14,
-    color: '#666',
-  },
-
-
-
-
   aiHeader: {
     borderRadius: 50,
     flexDirection: "row",

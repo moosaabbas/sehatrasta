@@ -10,10 +10,12 @@ import GoalForm from "../screens/goalform";
 import MedChecker from "../screens/MedChecker";
 import HealthRecord from "../screens/HealthRecord";
 import ImportedImage from "../screens/ImportedImage";
+import CalendarScreen from "../screens/CalendarScreen";
 
 import { MaterialIcons } from "@expo/vector-icons";
 import { Text, View } from "react-native";
 import { Purple } from "../assets/utils/palette";
+import Profile from "../screens/Profile";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -68,20 +70,20 @@ function MainTabs() {
         }}
       />
       <Tab.Screen
-        name="Pregnancy"
-        component={Pregnancy}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <MaterialIcons name="calendar-today" size={24} color={focused ? Purple : "gray"} />
-          ),
-          tabBarLabel: ({ focused }) => (
-            <Text style={{ color: focused ? Purple : 'gray', fontSize: 12 }}>Pregnancy</Text>
-          )
-        }}
-      />
+      name="Calendar"
+      component={CalendarScreen}
+      options={{
+      tabBarIcon: ({ focused }) => (
+        <MaterialIcons name="calendar-today" size={24} color={focused ? Purple : "gray"} />
+      ),
+      tabBarLabel: ({ focused }) => (
+        <Text style={{ color: focused ? Purple : 'gray', fontSize: 12 }}>Calendar</Text>
+      )
+    }}
+  />
       <Tab.Screen
         name="Profile"
-        component={DailyActivity}
+        component={Profile}
         options={{
           tabBarIcon: ({ focused }) => (
             <MaterialIcons name="person" size={24} color={focused ? Purple : "gray"} />

@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, TextInput, TouchableOpacity, Text, StyleSheet, ImageBackground, ScrollView,
-  SafeAreaView
+  View, TextInput, TouchableOpacity, Text, StyleSheet, FlatList, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, StatusBar
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { Picker } from '@react-native-picker/picker';
-import Ionicons from 'react-native-vector-icons/Ionicons'; 
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { BackgroundColor, Light_Purple, Purple, White } from '../assets/utils/palette'; // Ensure to import your color palette
+import { useSelector } from 'react-redux';
 
 const DailyActivity = () => {
+  const userDetail = useSelector((state) => state.user);
   const navigation = useNavigation();
   const [activityInput, setActivityInput] = useState('');
   const [duration, setDuration] = useState('');
@@ -33,14 +34,14 @@ const DailyActivity = () => {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'X-Api-Key': '3FUcQPj9gx2UZZd4hBQrdQ==p8hNU32iRPfILSWR'
+        'X-Api-Key': '3FUcQPj9gx2UZZd4hBQrdQ==p8hNU32iRPfILSWR' // Replace with your API Key or an environment variable
       }
     });
     const data = await response.json();
     if (data && data.length > 0) {
       setActivityOptions(data);
     } else {
-      console.log('No activities found');
+      setActivityOptions([]);
     }
   };
 
@@ -49,11 +50,11 @@ const DailyActivity = () => {
       console.log("Please select an activity and enter the duration");
       return;
     }
-    if (!user) {
+    if (!userDetail) {
       console.log("User is not authenticated!");
       return;
     }
-    const userDocRef = doc(firestore, 'users', user.uid);
+    const userDocRef = doc(firestore, 'users', userDetail.uid);
     const docSnap = await getDoc(userDocRef);
     if (docSnap.exists()) {
       const userData = docSnap.data();
@@ -78,10 +79,35 @@ const DailyActivity = () => {
     setGoalMessage(message);
   };
 
+  const renderActivityOption = ({ item }) => (
+    <TouchableOpacity onPress={() => setSelectedActivity(item)} style={styles.option}>
+      <Text style={styles.optionText}>{item.name} ({item.calories_per_hour} cal/hr)</Text>
+      {selectedActivity?.name === item.name && (
+        <Ionicons name="checkmark-circle" size={20} color={Purple} style={styles.checkmark} />
+      )}
+    </TouchableOpacity>
+  );
+
+  // Debouncing logic
+  let lastPress = 0;
+
+  const handleBackPress = () => {
+    const timeNow = new Date().getTime();
+    if (timeNow - lastPress < 1000) {
+      return;
+    }
+    lastPress = timeNow;
+    navigation.goBack();
+  };
+
   return (
-    <SafeAreaView>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
           <Ionicons
             name={"chevron-back"}
             size={30}
@@ -89,129 +115,145 @@ const DailyActivity = () => {
           />
         </TouchableOpacity>
         <Text style={styles.headerText}>Daily Activity</Text>
+        <View style={styles.placeholder}></View>
       </View>
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <View style={styles.container}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"} 
+        style={styles.container}
+      >
+        <ScrollView contentContainerStyle={styles.contentContainer}>
           <TextInput
             style={styles.input}
             placeholder="Type activity (e.g., boxing)"
             value={activityInput}
             onChangeText={setActivityInput}
+            placeholderTextColor={Light_Purple}
           />
           {activityOptions.length > 0 && (
-            <Picker
-              selectedValue={selectedActivity?.name}
-              onValueChange={(itemValue, itemIndex) =>
-                setSelectedActivity(activityOptions[itemIndex])
-              }
-              style={styles.picker}
-            >
-              {activityOptions.map((option, index) => (
-                <Picker.Item key={index} label={`${option.name}, ${option.calories_per_hour} cal/hr`} value={option.name} />
-              ))}
-            </Picker>
+            <FlatList
+              data={activityOptions}
+              renderItem={renderActivityOption}
+              keyExtractor={(item) => item.name}
+              style={styles.optionList}
+            />
           )}
           <TextInput
-            style={styles.input}
+            style={[styles.input, { marginTop: activityOptions.length > 0 ? 0 : 15 }]}
             placeholder="Duration (in minutes)"
             keyboardType="numeric"
             value={duration}
             onChangeText={setDuration}
+            placeholderTextColor={Light_Purple}
           />
           <TouchableOpacity style={styles.button} onPress={logActivity}>
             <Text style={styles.buttonText}>Log Activity</Text>
           </TouchableOpacity>
           {caloriesBurned !== null && <Text style={styles.caloriesText}>Calories Burned: {caloriesBurned.toFixed(2)}</Text>}
           {goalMessage && <Text style={styles.goalText}>{goalMessage}</Text>}
-        </View>
-      </ScrollView>
-      </SafeAreaView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  backgroundImage: {
+  safeArea: {
     flex: 1,
-    resizeMode: 'cover',
-    justifyContent: 'center',
+    backgroundColor: BackgroundColor,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    backgroundColor: 'rgba(0,0,0,0.5)', // Semi-transparent dark background for better visibility
-    width: '100%',
-    position: 'absolute',
-    top: 0,
-  },
-  backButton: {
-    padding: 10,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.8)', // Light background with opacity for the button
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 10,
   },
   headerText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 18,
+    fontWeight: "bold",
+    color: Purple,
     flex: 1,
-    textAlign: 'center',
+    textAlign: "center",
   },
-  scrollViewContent: {
-    paddingTop: 70, // Increased top padding
-    paddingBottom: 30,
-    alignItems: 'center',
-    width: '100%',
+  backButton: {
+    padding: 8,
+    backgroundColor: Light_Purple,
+    borderRadius: 100,
+  },
+  placeholder: {
+    width: 46,
+    height: 48,
   },
   container: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)', // Slightly transparent background
-    borderRadius: 15,
+    flex: 1,
+    backgroundColor: White,
     padding: 20,
-    width: '90%',
-    alignItems: 'center',
-    shadowColor: '#000',
+    margin: 20,
+    borderRadius: 20,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
   },
+  contentContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   input: {
     height: 50,
-    borderColor: '#ccc',
+    borderColor: '#ddd',
     borderWidth: 1,
     marginBottom: 15,
     paddingHorizontal: 15,
-    backgroundColor: 'white',
-    borderRadius: 10,
+    backgroundColor: '#F6F6F6',
+    borderRadius: 25,
     fontSize: 16,
   },
-  picker: {
-    height: 50,
+  optionList: {
     width: '100%',
+    maxHeight: 200,
     marginBottom: 15,
   },
-  button: {
-    backgroundColor: '#007AFF', // iOS blue for buttons
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 30,
+  option: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    width: '100%',
+  },
+  optionText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  checkmark: {
+    marginLeft: 10,
+  },
+  button: {
+    backgroundColor: Purple,
+    borderRadius: 25,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    marginTop: 10,
   },
   buttonText: {
-    color: '#fff',
+    color: White,
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
   caloriesText: {
     fontSize: 18,
     color: '#333',
     marginVertical: 10,
+    textAlign: 'center',
   },
   goalText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#4CAF50', // Green color for goal messages
+    color: '#4CAF50',
     marginTop: 10,
+    textAlign: 'center',
   },
 });
 

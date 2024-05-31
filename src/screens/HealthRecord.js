@@ -20,10 +20,12 @@ import "firebase/compat/storage";
 import { useNavigation } from "@react-navigation/native";
 import Ionicons from "react-native-vector-icons/Ionicons"; // Import Ionicons
 import { Light_Purple, Purple } from "../assets/utils/palette";
+import { useSelector } from "react-redux";
 
 const UploadMediaFile = () => {
   const [uploading, setUploading] = useState(false);
   const navigation = useNavigation();
+  const userDetail = useSelector((state) => state.user);
 
   const pickImageAndUpload = async () => {
     let results = await ImagePicker.launchImageLibraryAsync({
@@ -59,11 +61,11 @@ const UploadMediaFile = () => {
         const downloadURLs = await Promise.all(uploadTasks);
 
         const user = firebase.auth().currentUser;
-        if (user) {
+        if (userDetail) {
           const userDocRef = firebase
             .firestore()
             .collection("users")
-            .doc(user.uid);
+            .doc(userDetail.uid);
           await userDocRef.update({
             images: firebase.firestore.FieldValue.arrayUnion(...downloadURLs),
           });
@@ -83,11 +85,11 @@ const UploadMediaFile = () => {
   const navigateToImportedImage = async () => {
     try {
       const user = firebase.auth().currentUser;
-      if (user) {
+      if (userDetail) {
         const userDoc = await firebase
           .firestore()
           .collection("users")
-          .doc(user.uid)
+          .doc(userDetail.uid)
           .get();
         if (userDoc.exists && userDoc.data().images) {
           navigation.navigate("ImportedImage", {

@@ -20,6 +20,7 @@ import {
   Purple,
   White,
 } from "../assets/utils/palette";
+import { useSelector } from "react-redux";
 
 const GoalForm = ({ navigation }) => {
   const [currentWeight, setCurrentWeight] = useState("");
@@ -31,6 +32,7 @@ const GoalForm = ({ navigation }) => {
   const [activityLevel, setActivityLevel] = useState("sedentary");
   const [bmr, setBmr] = useState(0);
   const [deficitDays, setDeficitDays] = useState([]);
+  const userDetail = useSelector((state) => state.user);
 
   const firestore = getFirestore();
   const auth = getAuth();
@@ -38,8 +40,8 @@ const GoalForm = ({ navigation }) => {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      if (user) {
-        const userDocRef = doc(firestore, "users", user.uid);
+      if (userDetail) {
+        const userDocRef = doc(firestore, "users", userDetail.uid);
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
@@ -67,7 +69,7 @@ const GoalForm = ({ navigation }) => {
     };
 
     fetchUserData();
-  }, [user]);
+  }, [userDetail]);
 
   useEffect(() => {
     if (currentWeight && height && age && gender) {
@@ -135,8 +137,8 @@ const GoalForm = ({ navigation }) => {
       return;
     }
 
-    if (user) {
-      const userDocRef = doc(firestore, "users", user.uid);
+    if (userDetail) {
+      const userDocRef = doc(firestore, "users", userDetail.uid);
       try {
         await updateDoc(userDocRef, {
           currentWeight: parseFloat(currentWeight),
@@ -173,7 +175,7 @@ const GoalForm = ({ navigation }) => {
             style={{ color: "white" }}
           />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Set your goal</Text>
+        <Text style={styles.headerText}>Set Goals</Text>
         <View style={styles.placeholder}></View>
       </View>
       <ScrollView style={styles.scrollView}>

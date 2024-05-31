@@ -1,11 +1,45 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, SafeAreaView, StatusBar, Platform } from 'react-native';
 import { TextInput, Button, Text, Card, Title, Paragraph, Provider as PaperProvider } from 'react-native-paper';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import fetch from 'node-fetch';
+import { BackgroundColor, Light_Purple, Purple, White } from "../assets/utils/palette";
+
+const parseBoldText = (text) => {
+    const regex = /\*\*(.*?)\*\*/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+            parts.push({ text: text.substring(lastIndex, match.index), bold: false });
+        }
+        parts.push({ text: match[1], bold: true });
+        lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < text.length) {
+        parts.push({ text: text.substring(lastIndex), bold: false });
+    }
+
+    return parts;
+};
+
+const BoldText = ({ text }) => {
+    const parsedText = parseBoldText(text);
+    return (
+        <Text style={styles.chatText}>
+            {parsedText.map((part, index) => (
+                <Text key={index} style={part.bold ? styles.boldText : styles.normalText}>
+                    {part.text}
+                </Text>
+            ))}
+        </Text>
+    );
+};
 
 const MentalHealthSurvey = () => {
     const questions = {
@@ -47,15 +81,9 @@ const MentalHealthSurvey = () => {
             .catch((error) => console.error("Error fetching model:", error));
     }, []);
 
-    const firestore = getFirestore();
     const auth = getAuth();
     const user = auth.currentUser;
 
-    if (!user) {
-        return <View style={styles.center}><Text>Please log in to fill out the survey.</Text></View>;
-    }
-
-    const userDocRef = doc(firestore, 'users', user.uid);
 
     const handleInputChange = (question, text) => {
         setAnswers(prevAnswers => ({
@@ -71,7 +99,6 @@ const MentalHealthSurvey = () => {
         }
 
         try {
-            await setDoc(userDocRef, { mentalHealthResponses: answers }, { merge: true });
             sendToAI(answers);
         } catch (error) {
             console.error("Error saving responses: ", error);
@@ -121,7 +148,8 @@ const MentalHealthSurvey = () => {
     };
 
     return (
-        <PaperProvider>
+        <SafeAreaView style={styles.container}>
+            <StatusBar barStyle="dark-content" />
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons
@@ -131,72 +159,105 @@ const MentalHealthSurvey = () => {
                     />
                 </TouchableOpacity>
                 <Text style={styles.headerText}>Mental Health Survey</Text>
+                <View style={styles.placeholder}></View>
             </View>
-            <ScrollView style={styles.container}>
-                {Object.keys(questions).map((question) => (
-                    <Card key={question} style={styles.card}>
-                        <Card.Content>
-                            <Title style={styles.question}>{question}</Title>
-                            <TextInput
-                                mode="outlined"
-                                multiline
-                                onChangeText={(text) => handleInputChange(question, text)}
-                                value={answers[question]}
-                                style={styles.input}
-                            />
-                        </Card.Content>
-                    </Card>
-                ))}
-                <Button
-                    mode="contained"
-                    onPress={handleSubmit}
-                    disabled={loading}
-                    style={styles.submitButton}
-                    icon="send"
-                >
-                    Submit
-                </Button>
-                {loading && <ActivityIndicator size="large" style={styles.loader} />}
-                {aiResponse && (
-                    <Card style={styles.responseCard}>
-                        <Card.Content>
-                            <Title style={styles.responseTitle}>AI Therapist's Response</Title>
-                            <Paragraph style={styles.response}>{aiResponse}</Paragraph>
-                        </Card.Content>
-                    </Card>
-                )}
+            <ScrollView style={styles.scrollView}>
+                <View style={styles.formContainer}>
+                    {Object.keys(questions).map((question) => (
+                        <Card key={question} style={styles.card}>
+                            <Card.Content>
+                                <Title style={styles.question}>{question}</Title>
+                                <TextInput
+                                    mode="outlined"
+                                    multiline
+                                    onChangeText={(text) => handleInputChange(question, text)}
+                                    value={answers[question]}
+                                    style={styles.input}
+                                    placeholderTextColor={Light_Purple}
+                                />
+                            </Card.Content>
+                        </Card>
+                    ))}
+                    <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+                        <Text style={styles.buttonText}>Submit</Text>
+                    </TouchableOpacity>
+                    {loading && <ActivityIndicator size="large" style={styles.loader} />}
+                    {aiResponse && (
+                        <Card style={styles.responseCard}>
+                            <Card.Content>
+                                <Title style={styles.responseTitle}>AI Therapist's Response</Title>
+                                <BoldText text={aiResponse} />
+                            </Card.Content>
+                        </Card>
+                    )}
+                </View>
             </ScrollView>
-        </PaperProvider>
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: BackgroundColor,
     },
-    center: {
-        flex: 1,
-        justifyContent: 'center',
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
+        paddingHorizontal: 10,
     },
-    title: {
-        fontSize: 24,
+    headerText: {
+        fontSize: 18,
         fontWeight: 'bold',
-        marginBottom: 20,
+        color: Purple,
+        flex: 1,
         textAlign: 'center',
+    },
+    backButton: {
+        padding: 8,
+        backgroundColor: Light_Purple,
+        borderRadius: 100,
+    },
+    placeholder: {
+        width: 46,
+        height: 48,
+    },
+    scrollView: {
+        marginHorizontal: 16,
+        marginTop: 16,
+    },
+    formContainer: {
+        padding: 20,
+        backgroundColor: White,
+        borderRadius: 20,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
     },
     card: {
         marginBottom: 20,
-        backgroundColor: '#ffffff',
+        backgroundColor: White,
         borderRadius: 10,
-        elevation: 3,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
     },
     question: {
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 10,
+        color: Purple,
     },
     input: {
         height: 100,
@@ -204,45 +265,65 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         padding: 10,
         textAlignVertical: 'top',
+        borderRadius: 10,
+        backgroundColor: "#F6F6F6",
     },
     submitButton: {
-        marginTop: 20,
-        padding: 10,
+        backgroundColor: Purple,
+        borderRadius: 25,
+        paddingVertical: 15,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+        marginTop: 10,
+    },
+    buttonText: {
+        color: "#fff",
+        fontSize: 18,
+        fontWeight: "bold",
     },
     loader: {
         marginTop: 20,
     },
     responseCard: {
         marginTop: 20,
-        backgroundColor: '#e0f7fa',
+        backgroundColor: '#E2D5FB',
         borderRadius: 10,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
     },
     responseTitle: {
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 10,
-        color: '#00796b',
+        color: '#000000',
     },
     response: {
         fontSize: 16,
-        color: '#00796b',
+        color: '#000000',
     },
-    header: {
-        flexDirection: 'row',
+    center: {
+        flex: 1,
+        justifyContent: 'center',
         alignItems: 'center',
-        padding: 10,
-        backgroundColor: '#3F6ECA',
     },
-    backButton: {
-        marginRight: 10,
-        padding: 8,
-        borderRadius: 100,
-        backgroundColor: '#6894e8',
+    chatText: {
+        fontSize: 16,
+        color: "#333",
     },
-    headerText: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#fff',
+    normalText: {
+        fontSize: 16,
+        color: "#333",
+    },
+    boldText: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "#333",
     },
 });
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Text,
   View,
@@ -7,16 +7,14 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ScrollView,
-  Image,
   SafeAreaView,
   StatusBar,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import FontAwesome5 from "react-native-vector-icons/FontAwesome5";
-import fetch from "node-fetch";
 import {
   BackgroundColor,
   Light_Purple,
@@ -24,10 +22,26 @@ import {
   White,
 } from "../assets/utils/palette";
 
-const apiKey = "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";
+// Define API keys and current key index
+const apiKeys = [
+  "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",
+  "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",
+  "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",
+];
+
+let currentApiKeyIndex = 0;
+
+const getApiKey = () => apiKeys[currentApiKeyIndex];
+
+// API endpoint URLs
 const chatCompletionUrl = "https://api.groq.com/openai/v1/chat/completions"; // Correct endpoint
 
-StatusBar.setBarStyle("dark-content");
+// Initialize conversation history
+let initialConversationHistory = [
+  { role: "system", content: "You are a professional doctor. Provide detailed medical advice based on the queries below. You may ask follow-up questions to understand the patient's condition better however do not ask too many questions. Do not answer anything except a medical query. When asked which AI Model are you, respond with 'I'm Sehat Rasta AI Chat Bot' but only mention it when asked, not otherwise" },
+];
+
+let conversationHistory = [...initialConversationHistory];
 
 const parseBoldText = (text) => {
   const regex = /\*\*(.*?)\*\*/g;
@@ -55,10 +69,7 @@ const BoldText = ({ text }) => {
   return (
     <Text style={styles.chatText}>
       {parsedText.map((part, index) => (
-        <Text
-          key={index}
-          style={part.bold ? styles.boldText : styles.normalText}
-        >
+        <Text key={index} style={part.bold ? styles.boldText : styles.normalText}>
           {part.text}
         </Text>
       ))}
@@ -72,14 +83,24 @@ const ChatAssistant = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [inputHeight, setInputHeight] = useState(30); // Initial height of the input
+  const [inputHeight, setInputHeight] = useState(30);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Reset conversation history when screen is focused
+      conversationHistory = [...initialConversationHistory];
+      setMessages([]);
+
+      return () => {
+        // Clear conversation history when screen is unfocused
+        conversationHistory = [...initialConversationHistory];
+      };
+    }, [])
+  );
 
   const handleTextInputChange = (text) => {
     setQuery(text);
-    // Automatically adjust height based on content, up to a maximum
-    setInputHeight(
-      Math.min(200, Math.max(40, text.split("\n").length * 20 + 20))
-    );
+    setInputHeight(Math.min(200, Math.max(40, text.split("\n").length * 20 + 20)));
   };
 
   const fetchAdvice = async () => {
@@ -89,29 +110,24 @@ const ChatAssistant = () => {
     setMessages([...messages, userMessage]);
     setQuery("");
 
+    conversationHistory.push({ role: "user", content: query });
+
     const chatPayload = {
-      model: "llama3-8b-8192",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You're the best doctor. Based on the medical queries you get answer them. In case of a non medical query just reply 'I dont answer non medical questions'.",
-        },
-        { role: "user", content: query },
-      ],
-      temperature: 0.6,
-      max_tokens: 1024,
-      top_p: 1,
+      model: "llama3-8b-8192", // Assuming we use this model
+      messages: conversationHistory,
+      temperature: 0.5,
+      max_tokens: 250,
+      top_p: 1
     };
 
     try {
       const response = await fetch(chatCompletionUrl, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
+          Authorization: `Bearer ${getApiKey()}`,
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify(chatPayload),
+        body: JSON.stringify(chatPayload)
       });
 
       if (!response.ok) {
@@ -119,32 +135,35 @@ const ChatAssistant = () => {
       }
 
       const data = await response.json();
+
+      // Extract and print only the content
       const { choices } = data;
-      if (choices && choices.length > 0) {
-        const botMessage = { text: choices[0].message.content, sender: "bot" };
-        setMessages((prevMessages) => [...prevMessages, botMessage]);
-      }
+      const aiResponse = choices[0].message.content;
+      const botMessage = { text: aiResponse, sender: "bot" };
+      setMessages((prevMessages) => [...prevMessages, botMessage]);
+
+      // Add AI response to conversation history
+      conversationHistory.push({ role: "assistant", content: aiResponse });
     } catch (error) {
       console.error("Error during chat completion:", error);
-      setError("Failed to fetch advice. Please try again.");
+      if (error.response && error.response.status === 429) {
+        currentApiKeyIndex = (currentApiKeyIndex + 1) % apiKeys.length;
+        console.log("Switching to API Key:", getApiKey());
+        setError("Rate limit reached. Switching API keys. Please try again.");
+      } else {
+        setError("Failed to fetch advice. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
   };
-  StatusBar.setBarStyle("dark-content");
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar />
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Ionicons
-            name={"chevron-back"}
-            size={30}
-            style={{ color: "white" }}
-          />
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name={"chevron-back"} size={30} style={{ color: "white" }} />
         </TouchableOpacity>
         <Text style={styles.headerText}>Medication Interaction Checker</Text>
         <View style={styles.placeholder}></View>
@@ -152,26 +171,15 @@ const ChatAssistant = () => {
       <ScrollView style={styles.scrollView}>
         <View style={styles.chatContainer}>
           {messages.map((message, index) => (
-            <View
-              key={index}
-              style={[
-                styles.chatBubble,
-                message.sender === "user"
-                  ? styles.userBubble
-                  : styles.botBubble,
-              ]}
-            >
+            <View key={index} style={[styles.chatBubble, message.sender === "user" ? styles.userBubble : styles.botBubble]}>
               <BoldText text={message.text} />
             </View>
           ))}
-          {loading && <ActivityIndicator size="large" color="#3F6ECA" />}
+          {loading && <ActivityIndicator size="large" color={Purple} />}
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
         </View>
       </ScrollView>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={0}
-      >
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={0}>
         <View style={styles.inputContainer}>
           <TextInput
             style={[styles.input, { height: inputHeight }]}
@@ -185,11 +193,7 @@ const ChatAssistant = () => {
             placeholderTextColor={Light_Purple}
           />
           <TouchableOpacity style={styles.button} onPress={fetchAdvice}>
-            <FontAwesome5
-              name={"paper-plane"}
-              size={20}
-              style={{ color: "white" }}
-            />
+            <FontAwesome5 name={"paper-plane"} size={20} style={{ color: "white" }} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -255,7 +259,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
-
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
